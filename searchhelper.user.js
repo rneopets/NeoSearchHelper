@@ -11,7 +11,6 @@
 // @match        *://*.neopets.com/faerieland/employ/employment.phtml*
 // @match        *://*.neopets.com/faerieland/hiddentower938.phtml
 // @match        *://*.neopets.com/games/kadoatery/*
-// @match        *://*.neopets.com/games/kadoatery/index.phtml
 // @match        *://*.neopets.com/generalstore.phtml*
 // @match        *://*.neopets.com/genie.phtml*
 // @match        *://*.neopets.com/halloween/esophagor*.phtml*
