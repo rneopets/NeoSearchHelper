@@ -204,7 +204,7 @@ function makelinks(item, extras) {
         links += combiner(
             name,
             linkmap.battlepedia.url,
-            linkmap.battlepedia.img
+            linkmap.battlepedia.img,
         );
     }
 
@@ -415,14 +415,13 @@ if (isBeta) {
     // Tea Time With Tavi
     if (inURL("/games/teatime")) {
         function TaviQuest() {
-            $(".ttwt-item > img[src*='/items/'] + span").each(function (
-                index,
-                element
-            ) {
-                if (!hasSearchHelper(element)) {
-                    $(element).after(makelinks($(element).text()));
-                }
-            });
+            $(".ttwt-item > img[src*='/items/'] + span").each(
+                function (index, element) {
+                    if (!hasSearchHelper(element)) {
+                        $(element).after(makelinks($(element).text()));
+                    }
+                },
+            );
         }
         TaviQuest();
         $(document).ajaxSuccess(function () {
@@ -492,14 +491,14 @@ if (isBeta) {
     if (document.URL.includes("/island/tradingpost.phtml")) {
         $("img[src*='/items/']").each(function (k, v) {
             $(this.nextSibling).after(
-                makelinks($(this)[0].nextSibling.nodeValue)
+                makelinks($(this)[0].nextSibling.nodeValue),
             );
         });
     }
 
     // Redeeming Cash
     if (document.URL.includes("process_cash_object")) {
-        extras = { cash: true, wearable: true };
+        let extras = { cash: true, wearable: true };
         $("img[src*='/items/']")
             .parent()
             .find("b")
@@ -512,7 +511,7 @@ if (isBeta) {
 
     // Auctions
     if (document.URL.includes("auction_id")) {
-        nameb = $("b:contains('owned by')");
+        let nameb = $("b:contains('owned by')");
         let fixname = nameb.html();
         fixname = fixname.substr(0, fixname.indexOf(" (own")); // remove "owned by..."
         nameb.parent().find("img").after(makelinks(fixname));
@@ -521,13 +520,12 @@ if (isBeta) {
         document.URL.includes("auctions.phtml") ||
         document.URL.includes("genie.phtml")
     ) {
-        $("a[href*='?type=bids&auction_id=']:not(:has('img'))").each(function (
-            index,
-            element
-        ) {
-            const itemname = $(element).text();
-            $(element).after(makelinks(itemname));
-        });
+        $("a[href*='?type=bids&auction_id=']:not(:has('img'))").each(
+            function (index, element) {
+                const itemname = $(element).text();
+                $(element).after(makelinks(itemname));
+            },
+        );
     }
 
     // SDB & Closet
@@ -594,7 +592,7 @@ if (isBeta) {
     // Coincidence
     if (document.URL.includes("space/coincidence")) {
         $("img[src*='/items/']").each(function (k, v) {
-            nametd = $(v).parent();
+            let nametd = $(v).parent();
             nametd.find("b").eq(0).after(makelinks(nametd.justtext()));
         });
     }
@@ -658,7 +656,7 @@ if (isBeta) {
             function (k, v) {
                 let itemname = $(v).find("strong").last();
                 itemname.after(makelinks(itemname.text()));
-            }
+            },
         );
     }
 
