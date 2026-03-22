@@ -10,6 +10,7 @@
 // @match        *://*.neopets.com/faerieland/darkfaerie.phtml*
 // @match        *://*.neopets.com/faerieland/employ/employment.phtml*
 // @match        *://*.neopets.com/faerieland/hiddentower938.phtml
+// @match        *://*.neopets.com/gallery/index.phtml?*
 // @match        *://*.neopets.com/games/kadoatery/*
 // @match        *://*.neopets.com/generalstore.phtml*
 // @match        *://*.neopets.com/genie.phtml*
@@ -485,6 +486,7 @@ if (isBeta) {
      Your Shop's Sales History
      Quickstock
      Battledome
+     Gallery Rankings
     */
 
     // Trading Post
@@ -658,6 +660,23 @@ if (isBeta) {
                 itemname.after(makelinks(itemname.text()));
             },
         );
+    }
+
+    // Gallery pages
+    if (document.URL.includes("/gallery/index.phtml")) {
+        $("td").each(function (k, v) {
+            const cell = $(v);
+            const img = cell.find("img.itemimg[src*='/items/']").first();
+            const nameEl = cell.find("b.textcolor").first();
+
+            if (
+                img.length &&
+                nameEl.length &&
+                cell.find(".search-helper").length === 0
+            ) {
+                nameEl.after(makelinks(nameEl.text()));
+            }
+        });
     }
 
     // Hidden Tower
