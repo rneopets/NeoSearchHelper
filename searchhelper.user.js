@@ -664,18 +664,13 @@ if (isBeta) {
 
     // Gallery pages
     if (document.URL.includes("/gallery/index.phtml")) {
-        $("td").each(function (k, v) {
-            const cell = $(v);
-            const img = cell.find("img.itemimg[src*='/items/']").first();
-            const nameEl = cell.find("b.textcolor").first();
-
-            if (
-                img.length &&
-                nameEl.length &&
-                cell.find(".search-helper").length === 0
-            ) {
-                nameEl.after(makelinks(nameEl.text()));
-            }
+        $("img.itemimg[src*='/items/']").each(function (k, img) {
+            $(img)
+                .siblings("b.textcolor")
+                .first()
+                .each(function (i, nameEl) {
+                    $(nameEl).after(makelinks($(nameEl).text()));
+                });
         });
     }
 
