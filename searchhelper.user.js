@@ -45,6 +45,7 @@ const imgSize = 20; // for the search images
 $(`<style type='text/css'>
 .searchimg { cursor: pointer; height: ${imgSize}px !important; width: ${imgSize}px !important; border: none !important; border-radius: 0px !important;}
 .search-helper { margin-top: 0; margin-bottom: 0; }
+.qs-search-helper a { display: inline-block !important; }
 </style>`).appendTo("head");
 
 jQuery.fn.exists = function () {
@@ -221,17 +222,6 @@ function makelinks(item, extras) {
     // Changed quests to use div, because p makes the text spill out of RE box
     const element = inURL("quests.phtml") ? "div" : "p";
     const helper = $(`<${element} class='search-helper'>${links}</${element}>`);
-
-    // TODO: remove when TP is converted (hopefully)
-    // because of how ugly this makes the TP, let's inline it
-    const needInline =
-        inURL("/island/tradingpost.phtml") || inURL("/quickstock.phtml");
-    if (needInline) {
-        helper.css({
-            display: "inline-block",
-            "margin-left": "4px",
-        });
-    }
 
     return helper;
 }
@@ -446,6 +436,59 @@ if (isBeta) {
         });
     }
 
+    // Quickstock
+    if (inURL("quickstock.phtml")) {
+        function addQuickstockLinks() {
+            const quickstockRows = $("tbody.np-table-tbody tr");
+            quickstockRows.not(":last").each(function (index, row) {
+                const cells = $(row).find("td");
+                const isBlankRow =
+                    cells.length > 0 &&
+                    cells.toArray().every((cell) => {
+                        // \u00a0 is a non-breaking space (&nbsp;)
+                        const cellText = $(cell)
+                            .text()
+                            .replace(/\u00a0/g, "")
+                            .trim();
+                        return cellText === "";
+                    });
+                if (isBlankRow) {
+                    return;
+                }
+
+                const cell = cells.first();
+
+                const itemname = cell.text().trim();
+                if (itemname && cell.find(".search-helper").length === 0) {
+                    const isNeoCash = cell.find(".qs-cash-marker").length !== 0;
+                    const hasClosetOption =
+                        cells.eq(6).find("input[type='radio'][value='closet']")
+                            .length !== 0;
+                    const extras = {
+                        cash: isNeoCash,
+                        wearable: hasClosetOption,
+                    };
+                    cell.append(
+                        makelinks(itemname, extras).addClass(
+                            "qs-search-helper",
+                        ),
+                    );
+                }
+            });
+        }
+
+        addQuickstockLinks();
+
+        const quickstockBody = document.querySelector("tbody.np-table-tbody");
+        if (quickstockBody) {
+            const observer = new MutationObserver(addQuickstockLinks);
+            observer.observe(quickstockBody, {
+                childList: true,
+                subtree: true,
+            });
+        }
+    }
+
     // Battledome Beta
     if (inURL("/dome/neopets")) {
         $(".equipFrame").each(function (index, element) {
@@ -484,7 +527,6 @@ if (isBeta) {
      Kadoatery
      Hidden Tower
      Your Shop's Sales History
-     Quickstock
      Battledome
      Gallery Rankings
     */
@@ -698,18 +740,6 @@ if (isBeta) {
                     $(cell).append(makelinks($(cell).text()));
                 }
             });
-    }
-
-    // Quickstock
-    if (document.URL.includes("quickstock.phtml")) {
-        $('form[name="quickstock"] tr').each(function (index, element) {
-            if ($(element).find("td").length > 1) {
-                const cell = $(element).find("td").eq(0);
-                if ($(cell).text() !== "Check All") {
-                    $(cell).append(makelinks($(cell).text()));
-                }
-            }
-        });
     }
 
     function sswlimited(item) {
