@@ -112,8 +112,7 @@ function combiner(item, url, image) {
 }
 
 function sswlink(item) {
-    // the only different one because it doesn't use a URL
-    return `<img item='${item}' class='ssw-helper searchimg' src='${linkmap.ssw.img}'>`;
+    return `<a tabindex='-1' href='#' class='ssw-helper' data-item='${item}'><img src='${linkmap.ssw.img}' class='searchimg'></a>`;
 }
 
 function inURL(substr) {
@@ -768,6 +767,7 @@ if (isBeta) {
     }
 }
 
-$("body").on("click", ".ssw-helper", function () {
-    sswopen($(this).attr("item"));
+$("body").on("click", "a.ssw-helper", function (event) {
+    event.preventDefault();
+    sswopen($(this).attr("data-item"));
 });
