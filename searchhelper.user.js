@@ -195,6 +195,15 @@ function makelinks(item, extras) {
         links += combiner(name, linkmap.closet.url, linkmap.closet.img);
     }
 
+    // DTI
+    if (extras.wearable) {
+        let link = "https://impress.openneo.net/items?q=%s";
+        if (extras.itemid !== -1 && typeof extras.itemid != "undefined") {
+            link = `https://impress.openneo.net/items/${extras.itemid}`;
+        }
+        links += combiner(name, link, linkmap.dti.img);
+    }
+
     // JN items
     links += combiner(name, linkmap.jni.url, linkmap.jni.img);
 
@@ -208,15 +217,6 @@ function makelinks(item, extras) {
             linkmap.battlepedia.url,
             linkmap.battlepedia.img,
         );
-    }
-
-    // DTI
-    if (extras.wearable) {
-        let link = "https://impress.openneo.net/items?q=%s";
-        if (extras.itemid !== -1 && typeof extras.itemid != "undefined") {
-            link = `https://impress.openneo.net/items/${extras.itemid}`;
-        }
-        links += combiner(name, link, linkmap.dti.img);
     }
 
     // Changed quests to use div, because p makes the text spill out of RE box
