@@ -441,20 +441,6 @@ if (isBeta) {
             const quickstockRows = $("tbody.np-table-tbody tr");
             quickstockRows.not(":last").each(function (index, row) {
                 const cells = $(row).find("td");
-                const isBlankRow =
-                    cells.length > 0 &&
-                    cells.toArray().every((cell) => {
-                        // \u00a0 is a non-breaking space (&nbsp;)
-                        const cellText = $(cell)
-                            .text()
-                            .replace(/\u00a0/g, "")
-                            .trim();
-                        return cellText === "";
-                    });
-                if (isBlankRow) {
-                    return;
-                }
-
                 const cell = cells.first();
 
                 const itemCell = cell.clone();
