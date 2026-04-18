@@ -457,7 +457,9 @@ if (isBeta) {
 
                 const cell = cells.first();
 
-                const itemname = cell.text().trim();
+                const itemCell = cell.clone();
+                itemCell.find(".qs-count-badge").remove();
+                const itemname = itemCell.text().trim();
                 if (itemname && cell.find(".search-helper").length === 0) {
                     const isNeoCash = cell.find(".qs-cash-marker").length !== 0;
                     const hasClosetOption =
