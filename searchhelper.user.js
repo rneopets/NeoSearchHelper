@@ -469,7 +469,11 @@ if (isBeta) {
                         cash: isNeoCash,
                         wearable: hasClosetOption,
                     };
-                    cell.append(
+                    cell.css({
+                        display: "flex",
+                        flexFlow: "row wrap",
+                        gap: "4px 6px",
+                    }).append(
                         makelinks(itemname, extras).addClass(
                             "qs-search-helper",
                         ),
