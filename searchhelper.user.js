@@ -756,6 +756,7 @@ if (isBeta) {
         $("#ssw-criteria").val("exact");
 
         $("#searchstr").val(item);
+        $("#searchstr").focus();
     }
 }
 
