@@ -438,9 +438,16 @@ if (isBeta) {
     // Quickstock
     if (inURL("quickstock.phtml")) {
         function addQuickstockLinks() {
-            const quickstockRows = $("tbody.np-table-tbody tr");
-            quickstockRows.not(":last").each(function (index, row) {
-                const cells = $(row).find("td");
+            const $qsTable = $("table.quickstock-table");
+            if (!$qsTable.length) {
+                return;
+            }
+            $qsTable.find("tbody tr").each(function (index, row) {
+                const $row = $(row);
+                if ($row.find('input[type="radio"][name="checkall"]').length) {
+                    return;
+                }
+                const cells = $row.find("td");
                 const cell = cells.first();
 
                 const itemCell = cell.clone();
@@ -449,7 +456,7 @@ if (isBeta) {
                 if (itemname && cell.find(".search-helper").length === 0) {
                     const isNeoCash = cell.find(".qs-cash-marker").length !== 0;
                     const hasClosetOption =
-                        cells.eq(6).find("input[type='radio'][value='closet']")
+                        $row.find("input[type='radio'][value='closet']")
                             .length !== 0;
                     const extras = {
                         cash: isNeoCash,
@@ -468,16 +475,15 @@ if (isBeta) {
             });
         }
 
+        let qsT = 0;
+        new MutationObserver(function () {
+            clearTimeout(qsT);
+            qsT = setTimeout(addQuickstockLinks, 50);
+        }).observe(document.documentElement, {
+            childList: true,
+            subtree: true,
+        });
         addQuickstockLinks();
-
-        const quickstockBody = document.querySelector("tbody.np-table-tbody");
-        if (quickstockBody) {
-            const observer = new MutationObserver(addQuickstockLinks);
-            observer.observe(quickstockBody, {
-                childList: true,
-                subtree: true,
-            });
-        }
     }
 
     // Battledome Beta
