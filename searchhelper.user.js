@@ -46,6 +46,10 @@ $(`<style type='text/css'>
 .searchimg { cursor: pointer; height: ${imgSize}px !important; width: ${imgSize}px !important; border: none !important; border-radius: 0px !important;}
 .search-helper { margin-top: 0; margin-bottom: 0; }
 .qs-search-helper a { display: inline-block !important; }
+.sdb-item-info > .search-helper, .sdb-grid-item-content > .search-helper, .closet-list-item > div > .search-helper, .closet-grid-item-content > .search-helper { display: flex !important; flex-flow: row wrap; gap: 2px 3px; align-items: center; margin: 0; padding: 0; }
+.sdb-item-info > .search-helper a, .sdb-grid-item-content > .search-helper a, .closet-list-item > div > .search-helper a, .closet-grid-item-content > .search-helper a { display: inline-block !important; }
+.sdb-table .sdb-item-cell, .sdb-grid .sdb-grid-item, .closet-list-row .closet-list-item, .closet-grid .closet-grid-item { pointer-events: none; }
+.sdb-table .sdb-item-cell > *, .sdb-grid .sdb-grid-item > *, .closet-list-row .closet-list-item > *, .closet-grid .closet-grid-item > * { pointer-events: auto; }
 </style>`).appendTo("head");
 
 jQuery.fn.exists = function () {
@@ -252,12 +256,36 @@ if (isBeta) {
      Igloo Garage Sale
      General Store
      Battledome Equipment
+     Safety Deposit Box
+     Closet
     */
 
     // Common functions go here
     function hasSearchHelper(element) {
         // this will be used in ajaxSuccess handlers, as to not flood the page after hot-reloads
         return $(element).parent().find(".search-helper").length !== 0;
+    }
+
+    function isolateItemLinks($links) {
+        $links.find("a").each(function () {
+            const el = this;
+            const isSsw = el.classList.contains("ssw-helper");
+            ["click", "mousedown", "pointerdown"].forEach((type) => {
+                el.addEventListener(type, (e) => {
+                    e.stopPropagation();
+                    if (isSsw && type === "click") {
+                        e.preventDefault();
+                        sswopen(el.getAttribute("data-item"));
+                    }
+                });
+            });
+        });
+    }
+
+    function appendItemLinks($host, itemname, extras) {
+        const $links = makelinks(itemname, extras);
+        isolateItemLinks($links);
+        $host.append($links);
     }
 
     function genericQuest() {
@@ -486,6 +514,131 @@ if (isBeta) {
         addQuickstockLinks();
     }
 
+    // Safety Deposit Box
+    if (inURL("safetydeposit")) {
+        function addSDBLinks() {
+            $("table.sdb-table tbody tr").each(function (index, row) {
+                const $row = $(row);
+                if ($row.find(".search-helper").length) {
+                    return;
+                }
+                const $info = $row.find(".sdb-item-info").first();
+                const itemname = $info.find(".sdb-item-name").text().trim();
+                if (!itemname) {
+                    return;
+                }
+                const infoText = $info.text();
+                const chkId = $row
+                    .find(".sdb-col-select .sdb-item-checkbox")
+                    .attr("id");
+                appendItemLinks($info, itemname, {
+                    cash: /Type:\s*Neocash/i.test(infoText),
+                    wearable: $row.find(
+                        "select.sdb-action-select option[value='closet']",
+                    ).length,
+                    tradeable: !infoText.includes("(no trade)"),
+                    itemid: chkId?.match(/\d+$/)?.[0] ?? -1,
+                });
+            });
+
+            $(".sdb-grid .sdb-grid-item").each(function (index, item) {
+                const $item = $(item);
+                if ($item.find(".search-helper").length) {
+                    return;
+                }
+                const $content = $item.find(".sdb-grid-item-content").first();
+                const itemname = $content
+                    .find(".sdb-grid-item-name")
+                    .text()
+                    .trim();
+                if (!itemname) {
+                    return;
+                }
+                const category = $content
+                    .find(".sdb-grid-item-category")
+                    .text()
+                    .trim();
+                const contentText = $content.text();
+                appendItemLinks($content, itemname, {
+                    cash: category === "Neocash",
+                    wearable: category === "Clothes",
+                    tradeable: !contentText.includes("(no trade)"),
+                    itemid: -1,
+                });
+            });
+        }
+
+        let sdbT = 0;
+        new MutationObserver(function () {
+            clearTimeout(sdbT);
+            sdbT = setTimeout(addSDBLinks, 50);
+        }).observe(document.documentElement, {
+            childList: true,
+            subtree: true,
+        });
+        addSDBLinks();
+    }
+
+    // Closet
+    if (inURL("closet")) {
+        function addClosetLinks() {
+            $(".closet-list .closet-list-row").each(function (index, row) {
+                const $row = $(row);
+                if ($row.find(".search-helper").length) {
+                    return;
+                }
+                const $name = $row.find(".closet-list-item-name");
+                const itemname = $name.text().trim();
+                if (!itemname) {
+                    return;
+                }
+                appendItemLinks($name.parent(), itemname, {
+                    cash: /102,\s*102,\s*102/.test($name.attr("style") || ""),
+                    wearable: true,
+                    tradeable: !$row.text().includes("(no trade)"),
+                    itemid: -1,
+                });
+            });
+
+            $(".closet-grid .closet-grid-item").each(function (index, item) {
+                const $item = $(item);
+                if ($item.find(".search-helper").length) {
+                    return;
+                }
+                const $content = $item
+                    .find(".closet-grid-item-content")
+                    .first();
+                const itemname = $content
+                    .find(".closet-item-name")
+                    .text()
+                    .trim();
+                if (!itemname) {
+                    return;
+                }
+                const category = $content
+                    .find(".closet-item-category")
+                    .text()
+                    .trim();
+                appendItemLinks($content, itemname, {
+                    cash: category === "Neocash",
+                    wearable: true,
+                    tradeable: !$content.text().includes("(no trade)"),
+                    itemid: -1,
+                });
+            });
+        }
+
+        let closetT = 0;
+        new MutationObserver(function () {
+            clearTimeout(closetT);
+            closetT = setTimeout(addClosetLinks, 50);
+        }).observe(document.documentElement, {
+            childList: true,
+            subtree: true,
+        });
+        addClosetLinks();
+    }
+
     // Battledome Beta
     if (inURL("/dome/neopets")) {
         $(".equipFrame").each(function (index, element) {
@@ -511,8 +664,6 @@ if (isBeta) {
      Adds the search icons under things in:
      Trading Post
      Redeeming Cash
-     SDB
-     Closet
      Auction Bidding Page
      Your Shop Price Page
      Coincidence
@@ -567,51 +718,6 @@ if (isBeta) {
                 $(element).after(makelinks(itemname));
             },
         );
-    }
-
-    // SDB & Closet
-    let isSDB = document.URL.includes("safetydeposit");
-    let isCloset = document.URL.includes("closet");
-    if (isSDB || isCloset) {
-        $("img[src*='/items/']").each(function (k, v) {
-            let itemInput = $(v)
-                .parent()
-                .parent()
-                .find("td")
-                .eq(5)
-                .find("input");
-            let id =
-                itemInput.attr("data-item_id") ||
-                itemInput.attr("name").match(/\d+/g)[0];
-
-            let isWearable =
-                isCloset ||
-                $(v)
-                    .parent()
-                    .parent()
-                    .find("td")
-                    .eq(1)
-                    .text()
-                    .includes("(wearable)");
-            let isNeoCash = false;
-            if (isSDB) {
-                let category = $(v).parent().parent().find("td").eq(3);
-                isNeoCash = category.text().trim() === "Neocash";
-            } else if (isCloset) {
-                // this is not 100% accurate, see: https://items.jellyneo.net/item-error-list/rarities/
-                isNeoCash = $(v)
-                    .parent()
-                    .next("td")
-                    .text()
-                    .includes("(Artifact - 500)");
-            }
-            let extras = { cash: isNeoCash, wearable: isWearable, itemid: id };
-            let nametd = $(v).parent().parent().find("td").eq(1);
-            nametd
-                .find("b")
-                .eq(0)
-                .after(makelinks(nametd.find("b").eq(0).justtext(), extras));
-        });
     }
 
     // Your Shop
