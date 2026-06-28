@@ -27,6 +27,7 @@
 // @match        *://*.neopets.com/objects.phtml*
 // @match        *://*.neopets.com/pirates/academy.phtml?type=status*
 // @match        *://*.neopets.com/process_cash_object.phtml
+// @match        *://*.neopets.com/pool/puddle_quests.phtml
 // @match        *://*.neopets.com/quests.phtml
 // @match        *://*.neopets.com/quickstock.phtml*
 // @match        *://*.neopets.com/safetydeposit.phtml*
@@ -249,6 +250,7 @@ if (isBeta) {
      Snow Faerie Quests
      Esophagor Quests
      Edna Quests
+     Puddle Quests
      Illusen/Jhudora
      Hospital
      Quest Log Daily Rewards
@@ -363,6 +365,27 @@ if (isBeta) {
     if (inURL("halloween/witchtower")) {
         genericQuest();
         $(document).ajaxSuccess(genericQuest);
+    }
+
+    // Puddle Quests
+    if (inURL("/pool/puddle_quests")) {
+        function addPuddleQuestLinks() {
+            $(".pppq-item-name").each(function (index, element) {
+                if (!hasSearchHelper(element)) {
+                    $(element).after(makelinks($(element).text()));
+                }
+            });
+        }
+
+        let puddleT = 0;
+        new MutationObserver(function () {
+            clearTimeout(puddleT);
+            puddleT = setTimeout(addPuddleQuestLinks, 50);
+        }).observe(document.documentElement, {
+            childList: true,
+            subtree: true,
+        });
+        addPuddleQuestLinks();
     }
 
     // Illusen & Jhudora
