@@ -674,6 +674,13 @@ if (isBeta) {
         $(".equipTable").css({ "overflow-y": "scroll" });
     }
 
+    // Your Shop
+    if (inURL("type=your") || inURL("market_your")) {
+        $(".market-your-item__name").each(function (index, element) {
+            appendItemLinks($(element).parent(), $(element).text());
+        });
+    }
+
     function sswopen(item) {
         $(".premium-widget__2024").hide(); // hide all open widgets
         toggleWidget__2020("ssw");
@@ -741,22 +748,6 @@ if (isBeta) {
                 $(element).after(makelinks(itemname));
             },
         );
-    }
-
-    // Your Shop
-    if (
-        document.URL.includes("type=your") ||
-        document.URL.includes("market_your") ||
-        $("[name=subbynext]").length === 2
-    ) {
-        // because pressing the Previous/Next 30 is a POST and has nothing of value in the URL
-        $("img[src*='/items/']").each(function (k, v) {
-            let nametd = $(v).parent().parent().find("td").eq(0);
-            let itemname = nametd.text();
-            itemname = itemname.replace(nametd.find(".medText").text(), "");
-
-            nametd.find("b").eq(0).after(makelinks(itemname));
-        });
     }
 
     // Coincidence
