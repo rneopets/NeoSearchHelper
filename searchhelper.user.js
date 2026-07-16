@@ -681,6 +681,16 @@ if (isBeta) {
         });
     }
 
+    // Your Shop's Sales History
+    if (inURL("market.phtml?type=sales")) {
+        $(".mkt-page table tr").each(function (index, element) {
+            const cell = $(element).find("td").eq(1);
+            if (cell.attr("bgcolor") === "#ffffcc") {
+                appendItemLinks(cell, cell.text());
+            }
+        });
+    }
+
     function sswopen(item) {
         $(".premium-widget__2024").hide(); // hide all open widgets
         toggleWidget__2020("ssw");
@@ -839,23 +849,6 @@ if (isBeta) {
             .find("b:not([style*='red;'])")
             .each(function (index, element) {
                 $(element).after(makelinks($(element).text()));
-            });
-    }
-
-    // Your Shop's Sales History
-    if (document.URL.includes("market.phtml?type=sales")) {
-        $('[value="Clear Sales History"]')
-            .parent()
-            .parent()
-            .parent()
-            .parent()
-            .find("tr")
-            .each(function (index, element) {
-                // make sure it's not the header or footer of this table
-                let cell = $(element).find("td").eq(1);
-                if (cell.attr("bgcolor") === "#ffffcc") {
-                    $(cell).append(makelinks($(cell).text()));
-                }
             });
     }
 
