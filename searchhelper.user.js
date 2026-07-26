@@ -224,7 +224,8 @@ function makelinks(item, extras) {
     }
 
     // Changed quests to use div, because p makes the text spill out of RE box
-    const element = inURL("quests.phtml") ? "div" : "p";
+    const element =
+        inURL("quests.phtml") || inURL("quickstock.phtml") ? "div" : "p";
     const helper = $(`<${element} class='search-helper'>${links}</${element}>`);
 
     return helper;
