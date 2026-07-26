@@ -720,7 +720,7 @@ if (isBeta) {
     */
 
     // Trading Post
-    if (document.URL.includes("/island/tradingpost.phtml")) {
+    if (inURL("/island/tradingpost.phtml")) {
         $("img[src*='/items/']").each(function (k, v) {
             $(this.nextSibling).after(
                 makelinks($(this)[0].nextSibling.nodeValue),
@@ -729,7 +729,7 @@ if (isBeta) {
     }
 
     // Redeeming Cash
-    if (document.URL.includes("process_cash_object")) {
+    if (inURL("process_cash_object")) {
         let extras = { cash: true, wearable: true };
         $("img[src*='/items/']")
             .parent()
@@ -742,16 +742,13 @@ if (isBeta) {
     }
 
     // Auctions
-    if (document.URL.includes("auction_id")) {
+    if (inURL("auction_id")) {
         let nameb = $("b:contains('owned by')");
         let fixname = nameb.html();
         fixname = fixname.substr(0, fixname.indexOf(" (own")); // remove "owned by..."
         nameb.parent().find("img").after(makelinks(fixname));
     }
-    if (
-        document.URL.includes("auctions.phtml") ||
-        document.URL.includes("genie.phtml")
-    ) {
+    if (inURL("auctions.phtml") || inURL("genie.phtml")) {
         $("a[href*='?type=bids&auction_id=']:not(:has('img'))").each(
             function (index, element) {
                 const itemname = $(element).text();
@@ -761,7 +758,7 @@ if (isBeta) {
     }
 
     // Coincidence
-    if (document.URL.includes("space/coincidence")) {
+    if (inURL("space/coincidence")) {
         $("img[src*='/items/']").each(function (k, v) {
             let nametd = $(v).parent();
             nametd.find("b").eq(0).after(makelinks(nametd.justtext()));
@@ -769,21 +766,21 @@ if (isBeta) {
     }
 
     // MI Training
-    if (document.URL.includes("/island/training.phtml?type=status")) {
+    if (inURL("/island/training.phtml?type=status")) {
         $("img[src*='/items/']").each(function (k, v) {
             $(v).after(makelinks($(v).prev().text()));
         });
     }
 
     // Secret Training
-    if (document.URL.includes("/island/fight_training.phtml?type=status")) {
+    if (inURL("/island/fight_training.phtml?type=status")) {
         $("img[src*='/items/']").each(function (k, v) {
             $(v).after(makelinks($(v).prev().text()));
         });
     }
 
     // KI Training
-    if (document.URL.includes("/pirates/academy.phtml?type=status")) {
+    if (inURL("/pirates/academy.phtml?type=status")) {
         $("img[src*='/items/']").each(function (k, v) {
             let nametd = $(v).parent();
             let itemname = nametd.parent().find("td > b").eq(0).text();
@@ -792,8 +789,8 @@ if (isBeta) {
     }
 
     // employment agency
-    if (document.URL.includes("employment")) {
-        if (document.URL.includes("type=jobs")) {
+    if (inURL("employment")) {
+        if (inURL("type=jobs")) {
             $("b:contains('Find')").each(function (k, v) {
                 let itemname = $(v)
                     .parent()
@@ -806,7 +803,7 @@ if (isBeta) {
                 $($(v)[0].nextSibling).after(makelinks(itemname));
             });
         }
-        if (document.URL.includes("job_id")) {
+        if (inURL("job_id")) {
             $("b:contains('Find')")
                 .eq(0)
                 .after(makelinks($("b:contains('Find')").eq(0).justtext()));
@@ -814,7 +811,7 @@ if (isBeta) {
     }
 
     // Faerie Quests
-    if (document.URL.includes("quests.phtml")) {
+    if (inURL("quests.phtml")) {
         $("img[src*='/items/']").each(function (k, v) {
             let itemname = $(v).parent().find("b");
             itemname.after(makelinks(itemname.text()));
@@ -822,7 +819,7 @@ if (isBeta) {
     }
 
     // Kadoatery
-    if (document.URL.includes("games/kadoatery")) {
+    if (inURL("games/kadoatery")) {
         $("td:contains('You should give it'):not(:contains('Thanks,'))").each(
             function (k, v) {
                 let itemname = $(v).find("strong").last();
@@ -832,7 +829,7 @@ if (isBeta) {
     }
 
     // Gallery pages
-    if (document.URL.includes("/gallery/index.phtml")) {
+    if (inURL("/gallery/index.phtml")) {
         $("img.itemimg[src*='/items/']").each(function (k, img) {
             $(img)
                 .siblings("b.textcolor")
@@ -844,7 +841,7 @@ if (isBeta) {
     }
 
     // Hidden Tower
-    if (document.URL.includes("hiddentower938.phtml")) {
+    if (inURL("hiddentower938.phtml")) {
         $(".content table")
             .find("b:not([style*='red;'])")
             .each(function (index, element) {
