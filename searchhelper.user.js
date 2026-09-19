@@ -44,11 +44,12 @@
 const imgSize = 20; // for the search images
 
 $(`<style type='text/css'>
-.searchimg { cursor: pointer; height: ${imgSize}px !important; width: ${imgSize}px !important; border: none !important; border-radius: 0px !important;}
+.searchimg { cursor: pointer; height: ${imgSize}px !important; width: ${imgSize}px !important; border: none !important; border-radius: 0px !important; display: inline-block !important; }
 .search-helper { margin-top: 0; margin-bottom: 0; }
 .qs-search-helper a { display: inline-block !important; }
 .sdb-item-info > .search-helper, .sdb-grid-item-content > .search-helper, .closet-list-item > div > .search-helper, .closet-grid-item-content > .search-helper { display: flex !important; flex-flow: row wrap; gap: 2px 3px; align-items: center; margin: 0; padding: 0; }
 .sdb-item-info > .search-helper a, .sdb-grid-item-content > .search-helper a, .closet-list-item > div > .search-helper a, .closet-grid-item-content > .search-helper a { display: inline-block !important; }
+.fq-item > .search-helper { white-space: nowrap; }
 .sdb-table .sdb-item-cell, .sdb-grid .sdb-grid-item, .closet-list-row .closet-list-item, .closet-grid .closet-grid-item { pointer-events: none; }
 .sdb-table .sdb-item-cell > *, .sdb-grid .sdb-grid-item > *, .closet-list-row .closet-list-item > *, .closet-grid .closet-grid-item > * { pointer-events: auto; }
 </style>`).appendTo("head");
@@ -252,6 +253,7 @@ if (isBeta) {
      Esophagor Quests
      Edna Quests
      Puddle Quests
+     Faerie Quest Page
      Illusen/Jhudora
      Hospital
      Quest Log Daily Rewards
@@ -387,6 +389,27 @@ if (isBeta) {
             subtree: true,
         });
         addPuddleQuestLinks();
+    }
+
+    // Faerie Quests
+    if (inURL("quests.phtml")) {
+        function addFaerieQuestLinks() {
+            $(".fq-item-name").each(function (index, element) {
+                if (!hasSearchHelper(element)) {
+                    $(element).after(makelinks($(element).text()));
+                }
+            });
+        }
+
+        let faerieQuestT = 0;
+        new MutationObserver(function () {
+            clearTimeout(faerieQuestT);
+            faerieQuestT = setTimeout(addFaerieQuestLinks, 50);
+        }).observe(document.documentElement, {
+            childList: true,
+            subtree: true,
+        });
+        addFaerieQuestLinks();
     }
 
     // Illusen & Jhudora
@@ -712,7 +735,6 @@ if (isBeta) {
      Secret Training
      KI Training
      Employment Agency
-     Faerie Quest Page
      Kadoatery
      Hidden Tower
      Your Shop's Sales History
@@ -809,14 +831,6 @@ if (isBeta) {
                 .eq(0)
                 .after(makelinks($("b:contains('Find')").eq(0).justtext()));
         }
-    }
-
-    // Faerie Quests
-    if (inURL("quests.phtml")) {
-        $("img[src*='/items/']").each(function (k, v) {
-            let itemname = $(v).parent().find("b");
-            itemname.after(makelinks(itemname.text()));
-        });
     }
 
     // Kadoatery
