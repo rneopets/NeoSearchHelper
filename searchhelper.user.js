@@ -298,19 +298,36 @@ if (isBeta) {
         // Kitchen Quests
         // Snow Faerie Quests
 
-        // due to inconsistencies in the ajax requests, we will attempt to do two different kinds of search helper adds
-        $(".item-img + .item-name")
-            .find("b")
-            .each(function (index, element) {
-                if (!hasSearchHelper(element)) {
-                    $(element).after(makelinks($(element).text()));
-                }
-            });
+        // re-rolls swap the item name in place, so refresh helpers whose item changed
+        function addOrRefresh(element) {
+            const name = $(element).text().trim();
+            const $existing = $(element).siblings(".search-helper");
+            if ($existing.attr("data-item-name") === name) {
+                return;
+            }
+            $existing.remove();
+            $(element).after(
+                makelinks(name).attr("data-item-name", name),
+            );
+        }
+
+        // due to inconsistencies in the page, we will attempt to do two different kinds of search helper adds
+        $(".item-img + .item-name").find("b").each(function (index, element) {
+            addOrRefresh(element);
+        });
 
         $("img[src*='/items/'] + br + p > b").each(function (index, element) {
-            if (!hasSearchHelper(element)) {
-                $(element).after(makelinks($(element).text()));
-            }
+            addOrRefresh(element);
+        });
+
+        // name paragraph directly after an .item-img wrapper, with or without an item-name class
+        $(".item-img + p > b").each(function (index, element) {
+            addOrRefresh(element);
+        });
+
+        // img followed directly by p.item-name, no br
+        $("img[src*='/items/'] + p.item-name > b").each(function (index, element) {
+            addOrRefresh(element);
         });
     }
 
