@@ -456,42 +456,61 @@ if (isBeta) {
     // Quest Log Daily Rewards
     if (inURL("/questlog")) {
         function addQuestLogLinks() {
+            // re-rolls swap the item name in place, so refresh helpers whose item changed
+
             // Daily rewards
-            $(".ql-reward-item + .ql-reward-label + .search-helper").remove();
             $(".ql-reward-item + .ql-reward-label").each(function (k, v) {
-                $(v).after(makelinks($(v).text()));
+                let itemname = $(v).text();
+                const $existing = $(v).next(".search-helper");
+                if ($(v).closest(".ql-reward-np").length || /^[\d,]+ NP$/.test(itemname.trim())) {
+                    // ignore NP rewards, but drop any stale helper from a previous re-roll
+                    $existing.remove();
+                    return;
+                }
+                if (!itemname.trim()) {
+                    // name may be briefly empty mid re-roll, keep the old helper for now
+                    return;
+                }
+                if ($existing.attr("data-item-name") === itemname) {
+                    return;
+                }
+                $existing.remove();
+                $(v).after(makelinks(itemname).attr("data-item-name", itemname));
             });
 
             // Bonus rewards
-            $(".ql-bonus-reward > .search-helper").remove();
             $(".ql-bonus-reward > .ql-bonus-name").each(function (k, v) {
                 let itemname = $(v).text();
-                if (itemname.endsWith(",000 NP")) {
-                    // ignore NP rewards
+                const $existing = $(v).siblings(".search-helper");
+                if (/^[\d,]+ NP$/.test(itemname.trim())) {
+                    // ignore NP rewards, but drop any stale helper from a previous re-roll
+                    $existing.remove();
                     return;
                 }
-                $(v).after(makelinks(itemname));
+                if (!itemname.trim()) {
+                    // name may be briefly empty mid re-roll, keep the old helper for now
+                    return;
+                }
+                if ($existing.attr("data-item-name") === itemname) {
+                    return;
+                }
+                $existing.remove();
+                $(v).after(makelinks(itemname).attr("data-item-name", itemname));
             });
         }
 
         addQuestLogLinks();
 
-        const questLogContent = document.getElementById("QuestLogContent");
-        if (questLogContent) {
-            const observer = new MutationObserver(function (mutations, obs) {
-                obs.disconnect();
-                addQuestLogLinks();
-                obs.observe(questLogContent, {
-                    childList: true,
-                    subtree: true,
-                });
-            });
-
-            observer.observe(questLogContent, {
-                childList: true,
-                subtree: true,
-            });
-        }
+        // re-rolls can replace #QuestLogContent entirely, so observe the whole page instead
+        let questLogT = 0;
+        new MutationObserver(function () {
+            clearTimeout(questLogT);
+            questLogT = setTimeout(addQuestLogLinks, 50);
+        }).observe(document.documentElement, {
+            childList: true,
+            subtree: true,
+            characterData: true,
+        });
     }
 
     // Tea Time With Tavi
