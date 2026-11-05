@@ -450,12 +450,16 @@ if (isBeta) {
     }
 
     // Illusen & Jhudora
-    if ($(".faerie-img").exists()) {
-        let itemname = $(":contains('Where is my') > b").text();
-        $(":contains('Where is my')")
-            .parent()
-            .find("img[src*='/items/']")
-            .after(makelinks(itemname));
+    const $faerieImg = $(".faerie-img");
+    if ($faerieImg.exists()) {
+        const $question = $faerieImg.nextAll("p:contains('Where is my')").first();
+        const itemname = $question.children("b").first().text().trim();
+        const $image = $question.nextAll("img[src*='/items/']").first();
+        if (itemname && $image.length) {
+            const $links = makelinks(itemname);
+            isolateItemLinks($links);
+            $image.after($links);
+        }
     }
 
     // Shop Wiz Auto-Exact
