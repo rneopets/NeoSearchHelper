@@ -112,13 +112,18 @@ if (isBeta) {
     premium = $("#sswmenu .imgmenu").exists();
 }
 
+function escapeSearchAttribute(value) {
+    return String(value).replaceAll("&", "&amp;").replaceAll("'", "&#39;")
+        .replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+}
+
 function combiner(item, url, image) {
     url = url.replace("%s", item);
-    return `<a tabindex='-1' target='_blank' href='${url}'><img src='${image}' class='searchimg'></a>`;
+    return `<a tabindex='-1' target='_blank' href='${escapeSearchAttribute(url)}'><img src='${image}' class='searchimg'></a>`;
 }
 
 function sswlink(item) {
-    return `<a tabindex='-1' href='#' class='ssw-helper' data-item='${item}'><img src='${linkmap.ssw.img}' class='searchimg'></a>`;
+    return `<a tabindex='-1' href='#' class='ssw-helper' data-item='${escapeSearchAttribute(item)}'><img src='${linkmap.ssw.img}' class='searchimg'></a>`;
 }
 
 function inURL(substr) {
