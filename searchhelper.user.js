@@ -246,6 +246,28 @@ jQuery.fn.justtext = function () {
 // mentioned in their end-of-flash update that beta pages will be the default when those pages are done.
 // That said, the point of no return starts here. May Sloth have mercy on us.
 
+function isolateItemLinks($links) {
+    $links.find("a").each(function () {
+        const el = this;
+        const isSsw = el.classList.contains("ssw-helper");
+        ["click", "mousedown", "pointerdown"].forEach((type) => {
+            el.addEventListener(type, (e) => {
+                e.stopPropagation();
+                if (isSsw && type === "click") {
+                    e.preventDefault();
+                    sswopen(el.getAttribute("data-item"));
+                }
+            });
+        });
+    });
+}
+
+function appendItemLinks($host, itemname, extras) {
+    const $links = makelinks(itemname, extras);
+    isolateItemLinks($links);
+    $host.append($links);
+}
+
 if (isBeta) {
     /*
      Adds the search icons under things in:
@@ -272,28 +294,6 @@ if (isBeta) {
     function hasSearchHelper(element) {
         // this will be used in ajaxSuccess handlers, as to not flood the page after hot-reloads
         return $(element).parent().find(".search-helper").length !== 0;
-    }
-
-    function isolateItemLinks($links) {
-        $links.find("a").each(function () {
-            const el = this;
-            const isSsw = el.classList.contains("ssw-helper");
-            ["click", "mousedown", "pointerdown"].forEach((type) => {
-                el.addEventListener(type, (e) => {
-                    e.stopPropagation();
-                    if (isSsw && type === "click") {
-                        e.preventDefault();
-                        sswopen(el.getAttribute("data-item"));
-                    }
-                });
-            });
-        });
-    }
-
-    function appendItemLinks($host, itemname, extras) {
-        const $links = makelinks(itemname, extras);
-        isolateItemLinks($links);
-        $host.append($links);
     }
 
     function genericQuest() {
