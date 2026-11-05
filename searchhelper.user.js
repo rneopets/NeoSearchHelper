@@ -263,6 +263,38 @@ jQuery.fn.justtext = function () {
 // mentioned in their end-of-flash update that beta pages will be the default when those pages are done.
 // That said, the point of no return starts here. May Sloth have mercy on us.
 
+// Modern auction listings, Genie results, and lot details share these item nodes.
+if (inURL("/auctions.phtml") || inURL("/genie.phtml")) {
+    function addAuctionLinks() {
+        const $names = $(".ah2_itemname");
+        $(".ah2_row").each(function () {
+            $names.push(...$(this).children("td").eq(2)
+                .children("a[href*='auction_id=']").get());
+        });
+        $names.each(function () {
+            const $name = $(this);
+            const itemname = $name.text().trim();
+            const $existing = $name.next(".auction-search-helper");
+            if (!itemname) {
+                $existing.remove();
+            } else if ($existing.attr("data-item-name") !== itemname) {
+                $existing.remove();
+                const $links = makelinks(itemname).addClass("auction-search-helper");
+                isolateItemLinks($links);
+                $name.after($links);
+            }
+        });
+    }
+    const auctionWatchOptions = { childList: true, subtree: true, characterData: true };
+    const auctionObserver = new MutationObserver(function () {
+        auctionObserver.disconnect();
+        addAuctionLinks();
+        auctionObserver.observe(document.documentElement, auctionWatchOptions);
+    });
+    addAuctionLinks();
+    auctionObserver.observe(document.documentElement, auctionWatchOptions);
+}
+
 function isolateItemLinks($links) {
     $links.find("a").each(function () {
         const el = this;
@@ -822,13 +854,15 @@ if (isBeta) {
     }
 
     // Auctions
-    if (inURL("auction_id")) {
+    if (inURL("auction_id") && !document.querySelector(".ah2_itemname")) {
         let nameb = $("b:contains('owned by')");
-        let fixname = nameb.html();
-        fixname = fixname.substr(0, fixname.indexOf(" (own")); // remove "owned by..."
-        nameb.parent().find("img").after(makelinks(fixname));
+        if (nameb.length) {
+            let fixname = nameb.html();
+            fixname = fixname.substr(0, fixname.indexOf(" (own")); // remove "owned by..."
+            nameb.parent().find("img").after(makelinks(fixname));
+        }
     }
-    if (inURL("auctions.phtml") || inURL("genie.phtml")) {
+    if ((inURL("auctions.phtml") || inURL("genie.phtml")) && !document.querySelector(".ah2_row")) {
         $("a[href*='?type=bids&auction_id=']:not(:has('img'))").each(
             function (index, element) {
                 const itemname = $(element).text();
