@@ -176,7 +176,7 @@ function slugfy(itemName) {
 
 // overall linker thing
 function makelinks(item, extras) {
-    // extras is an object that can only have boolean of 'cash' and 'wearable' (for now) | and a string/int number 'itemid' (only needed for wearable being true)
+    // extras: cash, wearable, tradeable, optional DTI-only link (dti), and optional itemid.
     let links = "";
 
     item = $.trim(item);
@@ -221,7 +221,7 @@ function makelinks(item, extras) {
     }
 
     // DTI
-    if (extras.wearable) {
+    if (extras.wearable || extras.dti) {
         let link = "https://impress.openneo.net/items?q=%s";
         if (extras.itemid !== -1 && typeof extras.itemid != "undefined") {
             link = `https://impress.openneo.net/items/${extras.itemid}`;
@@ -247,7 +247,8 @@ function makelinks(item, extras) {
     // Changed quests to use div, because p makes the text spill out of RE box
     const element =
         isFaerieQuestPage || inURL("quickstock.phtml") ? "div" : "p";
-    const helper = $(`<${element} class='search-helper'>${links}</${element}>`);
+    const helper = $(`<${element} class='search-helper'>${links}</${element}>`)
+        .attr("data-item-name", item);
 
     return helper;
 }
