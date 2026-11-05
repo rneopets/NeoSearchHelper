@@ -19,6 +19,7 @@
 // @match        *://*.neopets.com/hospital.phtml*
 // @match        *://*.neopets.com/inventory.phtml*
 // @match        *://*.neopets.com/island/*training.phtml?*type=status*
+// @match        *://*.neopets.com/island/fight_training.phtml?*type=purchase*
 // @match        *://*.neopets.com/island/kitchen*.phtml*
 // @match        *://*.neopets.com/island/tradingpost.phtml*
 // @match        *://*.neopets.com/market.phtml*
@@ -856,6 +857,18 @@ if (isBeta) {
     if (searchHelperPageURL.pathname === "/island/fight_training.phtml" && searchHelperPageURL.searchParams.get("type") === "status") {
         $("img[src*='/items/']").each(function (k, v) {
             $(v).after(makelinks($(v).prev().text()));
+        });
+    }
+
+    // Ninja Weaponry purchase list
+    if (inURL("/island/fight_training.phtml") &&
+        new URL(document.URL).searchParams.get("type") === "purchase") {
+        $("a[href*='process_fight_training.phtml'][href*='type=buy']").each(function () {
+            const $cell = $(this).closest("td");
+            const itemname = $cell.children("b").first().text().trim();
+            if (itemname && !$cell.children(".search-helper").length) {
+                appendItemLinks($cell, itemname);
+            }
         });
     }
 
