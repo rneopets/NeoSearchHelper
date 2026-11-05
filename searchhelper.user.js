@@ -743,14 +743,12 @@ if (isBeta) {
         function addSDBLinks() {
             $("table.sdb-table tbody tr").each(function (index, row) {
                 const $row = $(row);
-                if ($row.find(".search-helper").length) {
-                    return;
-                }
                 const $info = $row.find(".sdb-item-info").first();
                 const itemname = $info.find(".sdb-item-name").text().trim();
-                if (!itemname) {
+                if (!itemname || $info.children(".search-helper").attr("data-item-name") === itemname) {
                     return;
                 }
+                $info.children(".search-helper").remove();
                 const infoText = $info.text();
                 const chkId = $row
                     .find(".sdb-col-select .sdb-item-checkbox")
@@ -767,17 +765,15 @@ if (isBeta) {
 
             $(".sdb-grid .sdb-grid-item").each(function (index, item) {
                 const $item = $(item);
-                if ($item.find(".search-helper").length) {
-                    return;
-                }
                 const $content = $item.find(".sdb-grid-item-content").first();
                 const itemname = $content
                     .find(".sdb-grid-item-name")
                     .text()
                     .trim();
-                if (!itemname) {
+                if (!itemname || $content.children(".search-helper").attr("data-item-name") === itemname) {
                     return;
                 }
+                $content.children(".search-helper").remove();
                 const category = $content
                     .find(".sdb-grid-item-category")
                     .text()
@@ -799,6 +795,7 @@ if (isBeta) {
         }).observe(document.documentElement, {
             childList: true,
             subtree: true,
+            characterData: true,
         });
         addSDBLinks();
     }
