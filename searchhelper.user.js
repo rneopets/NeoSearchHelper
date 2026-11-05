@@ -181,11 +181,15 @@ function makelinks(item, extras) {
 
     item = $.trim(item);
     if (typeof extras === "undefined") {
-        extras = { cash: false, wearable: false, tradeable: true };
+        extras = { cash: false, wearable: false, tradeable: true, dti: false };
     }
 
     if (typeof extras.tradeable === "undefined") {
         extras.tradeable = true;
+    }
+
+    if (typeof extras.dti === "undefined") {
+        extras.dti = false;
     }
 
     const sswurl = sswlink(item);
