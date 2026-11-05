@@ -121,6 +121,15 @@ function sswlink(item) {
     return `<a tabindex='-1' href='#' class='ssw-helper' data-item='${item}'><img src='${linkmap.ssw.img}' class='searchimg'></a>`;
 }
 
+function sswlimited(item) {
+    return (
+        /Nerkmid($|.X+$)/.test(item) ||
+        item.endsWith("Paint Brush") ||
+        item.endsWith("Transmogrification Potion") ||
+        /Laboratory Map(?: [1-9])?$/.test(item)
+    );
+}
+
 function inURL(substr) {
     return document.URL.includes(substr);
 }
@@ -756,6 +765,7 @@ if (isBeta) {
         toggleWidget__2020("ssw");
 
         $("#ssw-criteria").val("exact");
+        $("#price-limited").prop("checked", sswlimited(item));
         $("#searchstr").val(item);
         $("#ssw-button-new-search")[0].click();
     }
@@ -898,15 +908,6 @@ if (isBeta) {
             .each(function (index, element) {
                 $(element).after(makelinks($(element).text()));
             });
-    }
-
-    function sswlimited(item) {
-        return (
-            /Nerkmid($|.X+$)/.test(item) ||
-            item.endsWith("Paint Brush") ||
-            item.endsWith("Transmogrification Potion") ||
-            item.endsWith("Laboratory Map")
-        );
     }
 
     function sswopen(item) {
