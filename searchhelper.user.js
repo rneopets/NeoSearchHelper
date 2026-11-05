@@ -116,7 +116,7 @@ if (isBeta) {
 }
 
 function combiner(item, url, image) {
-    url = url.replace("%s", item);
+    url = url.replace("%s", () => item);
     return `<a tabindex='-1' target='_blank' href='${url}'><img src='${image}' class='searchimg'></a>`;
 }
 
@@ -130,6 +130,9 @@ function inURL(substr) {
 
 function cleanItem(item) {
     return item
+        .replaceAll("%", "%25")
+        .replaceAll("'", "%27")
+        .replaceAll('"', "%22")
         .replaceAll("!", "%21")
         .replaceAll("#", "%23")
         .replaceAll("&", "%26")
