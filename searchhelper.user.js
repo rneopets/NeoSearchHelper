@@ -188,6 +188,7 @@ function makelinks(item, extras) {
         extras.tradeable = true;
     }
 
+    // dti has no callers yet, but will come in handy for pages that list NC items
     if (typeof extras.dti === "undefined") {
         extras.dti = false;
     }
