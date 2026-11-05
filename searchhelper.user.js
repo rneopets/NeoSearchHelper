@@ -9,14 +9,14 @@
 // @match        *://*.neopets.com/dome/neopets.phtml*
 // @match        *://*.neopets.com/faerieland/darkfaerie.phtml*
 // @match        *://*.neopets.com/faerieland/employ/employment.phtml*
-// @match        *://*.neopets.com/faerieland/hiddentower938.phtml
+// @match        *://*.neopets.com/faerieland/hiddentower938.phtml*
 // @match        *://*.neopets.com/gallery/index.phtml?*
 // @match        *://*.neopets.com/games/kadoatery/*
 // @match        *://*.neopets.com/generalstore.phtml*
 // @match        *://*.neopets.com/genie.phtml*
 // @match        *://*.neopets.com/halloween/esophagor*.phtml*
 // @match        *://*.neopets.com/halloween/witchtower*.phtml*
-// @match        *://*.neopets.com/hospital.phtml
+// @match        *://*.neopets.com/hospital.phtml*
 // @match        *://*.neopets.com/inventory.phtml*
 // @match        *://*.neopets.com/island/*training.phtml?*type=status*
 // @match        *://*.neopets.com/island/kitchen*.phtml*
@@ -25,14 +25,14 @@
 // @match        *://*.neopets.com/market_your.phtml*
 // @match        *://*.neopets.com/medieval/earthfaerie.phtml*
 // @match        *://*.neopets.com/objects.phtml*
-// @match        *://*.neopets.com/pirates/academy.phtml?type=status*
-// @match        *://*.neopets.com/process_cash_object.phtml
-// @match        *://*.neopets.com/pool/puddle_quests.phtml
-// @match        *://*.neopets.com/quests.phtml
+// @match        *://*.neopets.com/pirates/academy.phtml?*type=status*
+// @match        *://*.neopets.com/process_cash_object.phtml*
+// @match        *://*.neopets.com/pool/puddle_quests.phtml*
+// @match        *://*.neopets.com/quests.phtml*
 // @match        *://*.neopets.com/quickstock.phtml*
 // @match        *://*.neopets.com/safetydeposit.phtml*
 // @match        *://*.neopets.com/shops/wizard.phtml*
-// @match        *://*.neopets.com/space/coincidence.phtml
+// @match        *://*.neopets.com/space/coincidence.phtml*
 // @match        *://*.neopets.com/winter/igloo.phtml*
 // @match        *://*.neopets.com/winter/snowfaerie*.phtml*
 // @match        *://*.neopets.com/questlog/
@@ -42,6 +42,9 @@
 // ==/UserScript==
 
 const imgSize = 20; // for the search images
+
+const searchHelperPageURL = new URL(document.URL);
+const isFaerieQuestPage = searchHelperPageURL.pathname === "/quests.phtml";
 
 $(`<style type='text/css'>
 .searchimg { cursor: pointer; height: ${imgSize}px !important; width: ${imgSize}px !important; border: none !important; border-radius: 0px !important; display: inline-block !important; }
@@ -172,7 +175,7 @@ function makelinks(item, extras) {
     const name = cleanItem(item);
 
     if (extras.cash === false && extras.tradeable === true) {
-        if (inURL("quests.phtml") === false) {
+        if (!isFaerieQuestPage) {
             // doesn't show either SW if you're on a quest
             // SSW
             if (premium) {
@@ -226,7 +229,7 @@ function makelinks(item, extras) {
 
     // Changed quests to use div, because p makes the text spill out of RE box
     const element =
-        inURL("quests.phtml") || inURL("quickstock.phtml") ? "div" : "p";
+        isFaerieQuestPage || inURL("quickstock.phtml") ? "div" : "p";
     const helper = $(`<${element} class='search-helper'>${links}</${element}>`);
 
     return helper;
@@ -409,7 +412,7 @@ if (isBeta) {
     }
 
     // Faerie Quests
-    if (inURL("quests.phtml")) {
+    if (isFaerieQuestPage) {
         function addFaerieQuestLinks() {
             $(".fq-item-name").each(function (index, element) {
                 if (!hasSearchHelper(element)) {
@@ -440,7 +443,7 @@ if (isBeta) {
 
     // Shop Wiz Auto-Exact
     // TODO: tbh this shouldn't be in this userscript
-    if (inURL("wizard.phtml?string=")) {
+    if (searchHelperPageURL.pathname === "/shops/wizard.phtml" && searchHelperPageURL.searchParams.has("string")) {
         $("#criteria").val("exact");
     }
 
@@ -742,7 +745,7 @@ if (isBeta) {
     }
 
     // Your Shop's Sales History
-    if (inURL("market.phtml?type=sales")) {
+    if (searchHelperPageURL.pathname === "/market.phtml" && searchHelperPageURL.searchParams.get("type") === "sales") {
         $(".mkt-page table tr").each(function (index, element) {
             const cell = $(element).find("td").eq(1);
             if (cell.attr("bgcolor") === "#ffffcc") {
@@ -825,21 +828,21 @@ if (isBeta) {
     }
 
     // MI Training
-    if (inURL("/island/training.phtml?type=status")) {
+    if (searchHelperPageURL.pathname === "/island/training.phtml" && searchHelperPageURL.searchParams.get("type") === "status") {
         $("img[src*='/items/']").each(function (k, v) {
             $(v).after(makelinks($(v).prev().text()));
         });
     }
 
     // Secret Training
-    if (inURL("/island/fight_training.phtml?type=status")) {
+    if (searchHelperPageURL.pathname === "/island/fight_training.phtml" && searchHelperPageURL.searchParams.get("type") === "status") {
         $("img[src*='/items/']").each(function (k, v) {
             $(v).after(makelinks($(v).prev().text()));
         });
     }
 
     // KI Training
-    if (inURL("/pirates/academy.phtml?type=status")) {
+    if (searchHelperPageURL.pathname === "/pirates/academy.phtml" && searchHelperPageURL.searchParams.get("type") === "status") {
         $("img[src*='/items/']").each(function (k, v) {
             let nametd = $(v).parent();
             let itemname = nametd.parent().find("td > b").eq(0).text();
