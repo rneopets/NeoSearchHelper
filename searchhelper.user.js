@@ -10,7 +10,7 @@
 // @match        *://*.neopets.com/faerieland/darkfaerie.phtml*
 // @match        *://*.neopets.com/faerieland/employ/employment.phtml*
 // @match        *://*.neopets.com/faerieland/hiddentower938.phtml*
-// @match        *://*.neopets.com/gallery/index.phtml?*
+// @match        *://*.neopets.com/gallery/*
 // @match        *://*.neopets.com/games/kadoatery/*
 // @match        *://*.neopets.com/generalstore.phtml*
 // @match        *://*.neopets.com/genie.phtml*
@@ -256,6 +256,17 @@ function makelinks(item, extras) {
 jQuery.fn.justtext = function () {
     return $(this).clone().children().remove().end().text();
 };
+
+if (inURL("/gallery/")) {
+    $("img.itemimg[src*='/items/']").each(function () {
+        const $name = $(this).siblings("b.textcolor").first();
+        if ($name.length && !$name.next(".search-helper").length) {
+            const $links = makelinks($name.text());
+            isolateItemLinks($links);
+            $name.after($links);
+        }
+    });
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // I don't really approve of doing the code this way, but in an effort to save as few headaches as possible
@@ -915,18 +926,6 @@ if (isBeta) {
                 itemname.after(makelinks(itemname.text()));
             },
         );
-    }
-
-    // Gallery pages
-    if (inURL("/gallery/index.phtml")) {
-        $("img.itemimg[src*='/items/']").each(function (k, img) {
-            $(img)
-                .siblings("b.textcolor")
-                .first()
-                .each(function (i, nameEl) {
-                    $(nameEl).after(makelinks($(nameEl).text()));
-                });
-        });
     }
 
     // Hidden Tower
