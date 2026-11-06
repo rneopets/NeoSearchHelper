@@ -7,6 +7,7 @@
 // @match        *://*.neopets.com/auctions.phtml*
 // @match        *://*.neopets.com/closet.phtml*
 // @match        *://*.neopets.com/dome/neopets.phtml*
+// @match        *://*.neopets.com/donations.phtml*
 // @match        *://*.neopets.com/faerieland/darkfaerie.phtml*
 // @match        *://*.neopets.com/faerieland/employ/employment.phtml*
 // @match        *://*.neopets.com/faerieland/hiddentower938.phtml*
@@ -54,6 +55,8 @@ $(`<style type='text/css'>
 #app .tp-search-helper { display: flex !important; flex-flow: row wrap; gap: 2px 3px; margin: 3px 0; }
 #app .tp-search-items { overflow-y: auto; }
 .sdb-item-info > .search-helper, .sdb-grid-item-content > .search-helper, .closet-list-item > div > .search-helper, .closet-grid-item-content > .search-helper { display: flex !important; flex-flow: row wrap; gap: 2px 3px; align-items: center; margin: 0; padding: 0; }
+.donation-search-helper { display: flex !important; flex-flow: row wrap; justify-content: center; gap: 2px 3px; margin: 4px 0; padding: 0; }
+.donation-search-helper a { display: inline-block !important; width: auto; margin: 0; padding: 0; }
 .sdb-item-info > .search-helper a, .sdb-grid-item-content > .search-helper a, .closet-list-item > div > .search-helper a, .closet-grid-item-content > .search-helper a { display: inline-block !important; }
 .fq-item > .search-helper { white-space: nowrap; }
 .sdb-table .sdb-item-cell, .sdb-grid .sdb-grid-item, .closet-list-row .closet-list-item, .closet-grid .closet-grid-item { pointer-events: none; }
@@ -327,6 +330,22 @@ function isolateItemLinks($links) {
                 }
             });
         });
+    });
+}
+
+// Keep search icons outside the links that claim donated items.
+if (inURL("/donations.phtml")) {
+    $(".moneytree-grid > .donated").each(function () {
+        const $card = $(this);
+        const $claim = $card.children("a[href*='takedonation_new.phtml']").first();
+        const itemname = ($claim.attr("data-name") || "").trim();
+        if (itemname && ($claim.attr("data-img") || "").includes("/items/") &&
+            !$card.children(".search-helper").length) {
+            appendItemLinks($card, itemname, {
+                cash: $claim.children(".item-img").hasClass("nc"),
+            });
+            $card.children(".search-helper").addClass("donation-search-helper");
+        }
     });
 }
 
