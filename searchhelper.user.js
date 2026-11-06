@@ -51,6 +51,8 @@ $(`<style type='text/css'>
 .searchimg { cursor: pointer; height: ${imgSize}px !important; width: ${imgSize}px !important; border: none !important; border-radius: 0px !important; display: inline-block !important; }
 .search-helper { margin-top: 0; margin-bottom: 0; }
 .qs-search-helper a { display: inline-block !important; }
+#app .tp-search-helper { display: flex !important; flex-flow: row wrap; gap: 2px 3px; margin: 3px 0; }
+#app .tp-search-items { overflow-y: auto; }
 .sdb-item-info > .search-helper, .sdb-grid-item-content > .search-helper, .closet-list-item > div > .search-helper, .closet-grid-item-content > .search-helper { display: flex !important; flex-flow: row wrap; gap: 2px 3px; align-items: center; margin: 0; padding: 0; }
 .sdb-item-info > .search-helper a, .sdb-grid-item-content > .search-helper a, .closet-list-item > div > .search-helper a, .closet-grid-item-content > .search-helper a { display: inline-block !important; }
 .fq-item > .search-helper { white-space: nowrap; }
@@ -274,6 +276,43 @@ if (inURL("/gallery/")) {
 // As pages are converted, they will be removed from the non-beta half of the following if-statement, as TNT
 // mentioned in their end-of-flash update that beta pages will be the default when those pages are done.
 // That said, the point of no return starts here. May Sloth have mercy on us.
+// The Trading Post renders cards and detail overlays after the initial page load.
+if (inURL("/island/tradingpost.phtml")) {
+    function addTradingPostLinks() {
+        const tradingPostRoot = document.getElementById("app");
+        if (!tradingPostRoot) return;
+        const $names = $(tradingPostRoot).find(".item-name-text, .tp-grid-item-name");
+        $(tradingPostRoot).find("img[src*='/items/']").each(function () {
+            $names.push(...$(this).parent().siblings("p").get());
+        });
+        $names.each(function () {
+            const $name = $(this);
+            const itemname = $name.text().trim();
+            const $existing = $name.next(".tp-search-helper");
+            if (!itemname) {
+                $existing.remove();
+            } else if ($existing.attr("data-item-name") !== itemname) {
+                $existing.remove();
+                const $links = makelinks(itemname, {
+                    cash: false,
+                    wearable: /\(wearable\)/i.test($name.siblings(".tp-grid-item-subname").text()),
+                }).addClass("tp-search-helper")
+                    .attr("data-item-name", itemname);
+                isolateItemLinks($links);
+                $name.after($links);
+                $name.closest(".bg-white").addClass("tp-search-items");
+            }
+        });
+    }
+    const watchOptions = { childList: true, subtree: true, characterData: true };
+    const tradingPostObserver = new MutationObserver(function () {
+        tradingPostObserver.disconnect();
+        addTradingPostLinks();
+        tradingPostObserver.observe(document.documentElement, watchOptions);
+    });
+    addTradingPostLinks();
+    tradingPostObserver.observe(document.documentElement, watchOptions);
+}
 
 function isolateItemLinks($links) {
     $links.find("a").each(function () {
@@ -799,7 +838,6 @@ if (isBeta) {
 } else {
     /*
      Adds the search icons under things in:
-     Trading Post
      Redeeming Cash
      Auction Bidding Page
      Your Shop Price Page
@@ -814,15 +852,6 @@ if (isBeta) {
      Battledome
      Gallery Rankings
     */
-
-    // Trading Post
-    if (inURL("/island/tradingpost.phtml")) {
-        $("img[src*='/items/']").each(function (k, v) {
-            $(this.nextSibling).after(
-                makelinks($(this)[0].nextSibling.nodeValue),
-            );
-        });
-    }
 
     // Redeeming Cash
     if (inURL("process_cash_object")) {
