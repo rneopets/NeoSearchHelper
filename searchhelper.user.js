@@ -822,7 +822,6 @@ if (isBeta) {
 } else {
     /*
      Adds the search icons under things in:
-     Trading Post
      Redeeming Cash
      Auction Bidding Page
      Your Shop Price Page
@@ -837,15 +836,6 @@ if (isBeta) {
      Battledome
      Gallery Rankings
     */
-
-    // Trading Post
-    if (inURL("/island/tradingpost.phtml") && !document.getElementById("app")) {
-        $("img[src*='/items/']").each(function (k, v) {
-            $(this.nextSibling).after(
-                makelinks($(this)[0].nextSibling.nodeValue),
-            );
-        });
-    }
 
     // Redeeming Cash
     if (inURL("process_cash_object")) {
