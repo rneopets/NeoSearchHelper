@@ -607,7 +607,7 @@ if (isBeta) {
                 const $name = $(this);
                 const itemname = $name.text().trim();
                 const $existing = $name.siblings(".search-helper");
-                if (!itemname || /^[\d,]+\s+NP$/i.test(itemname)) {
+                if (!itemname || $name.closest(".ql-reward-np").length || /^[\d,]+\s+NP$/i.test(itemname)) {
                     $existing.remove();
                 } else if ($existing.length !== 1 ||
                     $existing.attr("data-item-name") !== itemname) {
