@@ -817,7 +817,6 @@ if (isBeta) {
      Adds the search icons under things in:
      Trading Post
      Redeeming Cash
-     Auction Bidding Page
      Your Shop Price Page
      Coincidence
      MI Training
@@ -851,24 +850,6 @@ if (isBeta) {
                     .before("<br>")
                     .after(makelinks($(v).text(), extras));
             });
-    }
-
-    // Auctions
-    if (inURL("auction_id") && !document.querySelector(".ah2_itemname")) {
-        let nameb = $("b:contains('owned by')");
-        if (nameb.length) {
-            let fixname = nameb.html();
-            fixname = fixname.substr(0, fixname.indexOf(" (own")); // remove "owned by..."
-            nameb.parent().find("img").after(makelinks(fixname));
-        }
-    }
-    if ((inURL("auctions.phtml") || inURL("genie.phtml")) && !document.querySelector(".ah2_row")) {
-        $("a[href*='?type=bids&auction_id=']:not(:has('img'))").each(
-            function (index, element) {
-                const itemname = $(element).text();
-                $(element).after(makelinks(itemname));
-            },
-        );
     }
 
     // Coincidence
