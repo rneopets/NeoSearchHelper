@@ -241,8 +241,8 @@ function sswlimited(item) {
     );
 }
 
-function inURL(substr) {
-    return document.URL.includes(substr);
+function inPath(prefix) {
+    return searchHelperPageURL.pathname.startsWith(prefix);
 }
 
 function cleanItem(item) {
@@ -314,12 +314,12 @@ function makelinks(item, extras) {
     }
 
     // SDB
-    if (inURL("safetydeposit") === false) {
+    if (inPath("/safetydeposit.phtml") === false) {
         links.sdb = combiner(name, linkmap.sdb.url, linkmap.sdb.img);
     }
 
     // Closet
-    if (extras.wearable && inURL("closet.phtml") === false) {
+    if (extras.wearable && inPath("/closet.phtml") === false) {
         links.closet = combiner(name, linkmap.closet.url, linkmap.closet.img);
     }
 
@@ -339,7 +339,7 @@ function makelinks(item, extras) {
     links.idb = combiner(slugfy(item), linkmap.idb.url, linkmap.idb.img);
 
     // Battlepedia
-    if (inURL("dome") || extras.cash === false) {
+    if (inPath("/dome/") || extras.cash === false) {
         links.battlepedia = combiner(
             name,
             linkmap.battlepedia.url,
@@ -349,7 +349,7 @@ function makelinks(item, extras) {
 
     // Changed quests to use div, because p makes the text spill out of RE box
     const element =
-        isFaerieQuestPage || inURL("quickstock.phtml") ? "div" : "p";
+        isFaerieQuestPage || inPath("/quickstock.phtml") ? "div" : "p";
     const helper = $(`<${element} class='search-helper'>${searchLayoutOrder().map((key) => links[key] || "").join("")}</${element}>`)
         .attr("data-item-name", item);
 
@@ -533,7 +533,7 @@ jQuery.fn.justtext = function () {
     return $(this).clone().children().remove().end().text();
 };
 
-if (inURL("/gallery/")) {
+if (inPath("/gallery/")) {
     $("img.itemimg[src*='/items/']").each(function () {
         const $name = $(this).siblings("b.textcolor").first();
         if ($name.length && !$name.next(".search-helper").length) {
@@ -551,7 +551,7 @@ if (inURL("/gallery/")) {
 // mentioned in their end-of-flash update that beta pages will be the default when those pages are done.
 // That said, the point of no return starts here. May Sloth have mercy on us.
 // The Trading Post renders cards and detail overlays after the initial page load.
-if (inURL("/island/tradingpost.phtml")) {
+if (inPath("/island/tradingpost.phtml")) {
     function addTradingPostLinks() {
         const tradingPostRoot = document.getElementById("app");
         if (!tradingPostRoot) return;
@@ -641,7 +641,7 @@ if (isBeta) {
     */
 
     // Modern auction listings, Genie results, and lot details share these item nodes.
-    if (inURL("/auctions.phtml") || inURL("/genie.phtml")) {
+    if (inPath("/auctions.phtml") || inPath("/genie.phtml")) {
         function addAuctionLinks() {
             const $names = $(".ah2_itemname");
             $(".ah2_row").each(function () {
@@ -673,7 +673,7 @@ if (isBeta) {
     }
 
     // Keep search icons outside the links that claim donated items.
-    if (inURL("/donations.phtml")) {
+    if (inPath("/donations.phtml")) {
         $(".moneytree-grid > .donated").each(function () {
             const $card = $(this);
             const $claim = $card.children("a[href*='takedonation_new.phtml']").first();
@@ -731,8 +731,8 @@ if (isBeta) {
     }
 
     // Main Shops
-    if (inURL("objects.phtml") || inURL("type=shop")) {
-        const shopId = new URL(document.URL).searchParams.get("obj_type");
+    if (inPath("/objects.phtml") || searchHelperPageURL.searchParams.get("type") === "shop") {
+        const shopId = searchHelperPageURL.searchParams.get("obj_type");
         $(".item-img + .item-name").each(function (index, element) {
             $(element).after(makelinks($(element).text(), {
                 cash: false,
@@ -742,7 +742,7 @@ if (isBeta) {
     }
 
     // User Shop Fronts
-    if (inURL("browseshop.phtml")) {
+    if (inPath("/browseshop.phtml")) {
         // The Shop Wizard's featured item sits outside the regular grid region.
         const shopRegion = document.querySelector(".bsp-page");
         if (shopRegion) {
@@ -770,7 +770,7 @@ if (isBeta) {
     }
 
     // Inventory
-    if (inURL("inventory")) {
+    if (inPath("/inventory.phtml")) {
         // the inventory system is more flexible than it used to be, so we have to do this a little differently
         function addInventoryLinks() {
             $(".item-img + .item-name").each(function (index, element) {
@@ -805,31 +805,31 @@ if (isBeta) {
     }
 
     // Kitchen Quest
-    if (inURL("island/kitchen")) {
+    if (inPath("/island/kitchen")) {
         genericQuest();
         $(document).ajaxSuccess(genericQuest);
     }
 
     // Snow Faerie
-    if (inURL("winter/snowfaerie")) {
+    if (inPath("/winter/snowfaerie")) {
         genericQuest();
         $(document).ajaxSuccess(genericQuest);
     }
 
     // Esophagor
-    if (inURL("halloween/esophagor")) {
+    if (inPath("/halloween/esophagor")) {
         genericQuest();
         $(document).ajaxSuccess(genericQuest);
     }
 
     // Edna
-    if (inURL("halloween/witchtower")) {
+    if (inPath("/halloween/witchtower")) {
         genericQuest();
         $(document).ajaxSuccess(genericQuest);
     }
 
     // Puddle Quests
-    if (inURL("/pool/puddle_quests")) {
+    if (inPath("/pool/puddle_quests.phtml")) {
         function addPuddleQuestLinks() {
             $(".pppq-item-name").each(function (index, element) {
                 if (!hasSearchHelper(element)) {
@@ -890,7 +890,7 @@ if (isBeta) {
     }
 
     // Hospital
-    if (inURL("/hospital.phtml")) {
+    if (inPath("/hospital.phtml")) {
         $(".nh-disease-cure > span > b").each(function (k, v) {
             $(v)
                 .parent()
@@ -899,7 +899,7 @@ if (isBeta) {
     }
 
     // Quest Log Daily Rewards
-    if (inURL("/questlog")) {
+    if (inPath("/questlog/")) {
         const questLogContent = document.getElementById("quest-log-app") ||
             document.getElementById("QuestLogContent");
         function addQuestLogLinks() {
@@ -935,7 +935,7 @@ if (isBeta) {
     }
 
     // Tea Time With Tavi
-    if (inURL("/games/teatime")) {
+    if (inPath("/games/teatime/")) {
         function TaviQuest() {
             $(".ttwt-item > img[src*='/items/'] + span").each(
                 function (index, element) {
@@ -961,14 +961,14 @@ if (isBeta) {
     }
 
     // Igloo Garage Sale
-    if (inURL("/winter/igloo.phtml")) {
+    if (inPath("/winter/igloo.phtml")) {
         $(".igs-item b").each(function (index, element) {
             $(element).after(makelinks($(element).text()));
         });
     }
 
     // General Store
-    if (inURL("generalstore.phtml")) {
+    if (inPath("/generalstore.phtml")) {
         $(".item-title").each(function (index, element) {
             const links = makelinks($(element).text());
             links.css({ "margin-top": "-10px" });
@@ -977,7 +977,7 @@ if (isBeta) {
     }
 
     // Quickstock
-    if (inURL("quickstock.phtml")) {
+    if (inPath("/quickstock.phtml")) {
         function addQuickstockLinks() {
             const $qsTable = $("table.quickstock-table");
             if (!$qsTable.length) {
@@ -1028,7 +1028,7 @@ if (isBeta) {
     }
 
     // Safety Deposit Box
-    if (inURL("safetydeposit")) {
+    if (inPath("/safetydeposit.phtml")) {
         function addSDBLinks() {
             $("table.sdb-table tbody tr").each(function (index, row) {
                 const $row = $(row);
@@ -1090,7 +1090,7 @@ if (isBeta) {
     }
 
     // Closet
-    if (inURL("closet")) {
+    if (inPath("/closet.phtml")) {
         function addClosetLinks() {
             $(".closet-list .closet-list-row").each(function (index, row) {
                 const $row = $(row);
@@ -1150,7 +1150,7 @@ if (isBeta) {
     }
 
     // Battledome Beta
-    if (inURL("/dome/neopets")) {
+    if (inPath("/dome/neopets.phtml")) {
         $(".equipFrame").each(function (index, element) {
             const itemname = $(element).text().trim();
             if (itemname) {
@@ -1162,7 +1162,7 @@ if (isBeta) {
     }
 
     // Your Shop
-    if (inURL("type=your") || inURL("market_your")) {
+    if (searchHelperPageURL.searchParams.get("type") === "your" || inPath("/market_your.phtml")) {
         $(".market-your-item__name").each(function (index, element) {
             appendItemLinks($(element).parent(), $(element).text());
         });
@@ -1206,7 +1206,7 @@ if (isBeta) {
     */
 
     // Thrift Shoppe
-    if (inURL("/thriftshoppe/index.phtml")) {
+    if (inPath("/thriftshoppe/index.phtml")) {
         $("a[href^='javascript:take_donation(']").each(function () {
             const $claim = $(this);
             const $cell = $claim.closest("td");
@@ -1219,7 +1219,7 @@ if (isBeta) {
     }
 
     // Almost Abandoned Attic
-    if (inURL("/halloween/garage.phtml")) {
+    if (inPath("/halloween/garage.phtml")) {
         $("#items > li[oii]").each(function () {
             const $item = $(this);
             const itemname = $item.attr("oname")?.trim();
@@ -1231,7 +1231,7 @@ if (isBeta) {
     }
 
     // Redeeming Cash
-    if (inURL("process_cash_object")) {
+    if (inPath("/process_cash_object.phtml")) {
         let extras = { cash: true, wearable: true };
         $("img[src*='/items/']")
             .parent()
@@ -1244,7 +1244,7 @@ if (isBeta) {
     }
 
     // Coincidence
-    if (inURL("space/coincidence")) {
+    if (inPath("/space/coincidence.phtml")) {
         $("img[src*='/items/']").each(function (k, v) {
             let nametd = $(v).parent();
             nametd.find("b").eq(0).after(makelinks(nametd.justtext()));
@@ -1266,8 +1266,8 @@ if (isBeta) {
     }
 
     // Ninja Weaponry purchase list
-    if (inURL("/island/fight_training.phtml") &&
-        new URL(document.URL).searchParams.get("type") === "purchase") {
+    if (searchHelperPageURL.pathname === "/island/fight_training.phtml" &&
+        searchHelperPageURL.searchParams.get("type") === "purchase") {
         $("a[href*='process_fight_training.phtml'][href*='type=buy']").each(function () {
             const $cell = $(this).closest("td");
             const itemname = $cell.children("b").first().text().trim();
@@ -1287,8 +1287,8 @@ if (isBeta) {
     }
 
     // employment agency
-    if (inURL("employment")) {
-        if (inURL("type=jobs")) {
+    if (inPath("/faerieland/employ/employment.phtml")) {
+        if (searchHelperPageURL.searchParams.get("type") === "jobs") {
             $("b:contains('Find')").each(function (k, v) {
                 let itemname = $(v)
                     .parent()
@@ -1301,7 +1301,7 @@ if (isBeta) {
                 $($(v)[0].nextSibling).after(makelinks(itemname));
             });
         }
-        if (inURL("job_id")) {
+        if (searchHelperPageURL.searchParams.has("job_id")) {
             $("b:contains('Find')")
                 .eq(0)
                 .after(makelinks($("b:contains('Find')").eq(0).justtext()));
@@ -1309,7 +1309,7 @@ if (isBeta) {
     }
 
     // Kadoatery
-    if (inURL("games/kadoatery")) {
+    if (inPath("/games/kadoatery/")) {
         $("td:contains('You should give it'):not(:contains('Thanks,'))").each(
             function (k, v) {
                 let itemname = $(v).find("strong").last();
@@ -1319,7 +1319,7 @@ if (isBeta) {
     }
 
     // Hidden Tower
-    if (inURL("hiddentower938.phtml")) {
+    if (inPath("/faerieland/hiddentower938.phtml")) {
         $(".content table")
             .find("b:not([style*='red;'])")
             .each(function (index, element) {
