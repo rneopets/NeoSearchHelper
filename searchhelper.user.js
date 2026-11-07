@@ -55,41 +55,62 @@ const searchHelperPageURL = new URL(document.URL);
 const isFaerieQuestPage = searchHelperPageURL.pathname === "/quests.phtml";
 
 $(`<style type='text/css'>
+/* ===== Search icons (all pages) ===== */
+/* Search icon images */
 .searchimg { cursor: pointer; height: ${imgSize}px !important; width: ${imgSize}px !important; border: none !important; border-radius: 0px !important; display: inline-block !important; }
+/* Base wrapper around a row of icons */
 .search-helper { margin-top: 0; margin-bottom: 0; }
+/* ===== Settings popup (opened from the Settings menu item) ===== */
+/* Settings popup: centered modal */
 #search-helper-popup { display: none; position: fixed !important; top: 50% !important; left: 50% !important; margin: 0 !important; transform: translate(-50%, -50%); z-index: 10001; max-width: calc(100vw - 24px); }
 #search-helper-popup.open { display: block !important; }
 #search-helper-popup { width: 440px; }
+/* Settings popup: body, hint text, and section headings */
 #search-helper-popup .popup-body__2020 { padding: 14px 18px 10px !important; box-sizing: border-box; }
 #search-helper-popup * { box-sizing: border-box; }
 #search-helper-popup .sh-hint { margin: 0 0 8px; font-size: 12px; color: #666; text-align: center; }
 #search-helper-popup h4 { margin: 10px 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; text-align: left; color: #555; }
+/* Settings popup: drop zones for active and inactive icons, highlighted while dragging over */
 #search-helper-popup .sh-dock { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; align-content: start; min-height: 76px; padding: 10px; margin-bottom: 6px; border: 2px dashed #c9c9c9; border-radius: 8px; background: #fafafa; transition: border-color .15s, background .15s; }
 #search-helper-popup .sh-dock:empty::before { content: attr(data-empty); grid-column: 1 / -1; align-self: center; text-align: center; font-size: 12px; color: #999; }
 #search-helper-popup .sh-dock.over { border-color: #78602c; background: #78602c18; }
+/* Settings popup: reset button */
 #search-helper-popup .sh-reset { display: block; margin: 6px auto 0; padding: 4px 12px; border: 1px solid #ccc; border-radius: 6px; background: #fff; color: #444; font-size: 12px; cursor: pointer; }
 #search-helper-popup .sh-reset:hover { background: #f0f0f0; }
+/* Settings popup: draggable icon tiles; inactive ones are dimmed */
 #search-helper-popup .sh-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; width: 100%; height: 62px; padding: 4px; border: 1px solid #ddd; border-radius: 8px; background: #fff; box-shadow: 0 1px 2px #0002; cursor: grab; font-size: 11px; line-height: 1.1; text-align: center; user-select: none; transition: transform .1s, box-shadow .1s; }
 #search-helper-popup .sh-tile:hover, #search-helper-popup .sh-tile:focus-visible { transform: translateY(-1px); box-shadow: 0 3px 6px #0003; outline: none; }
 #search-helper-popup .sh-tile img { width: 26px; height: 26px; pointer-events: none; }
 #search-helper-popup .sh-dock[data-dock='inactive'] .sh-tile { opacity: 0.55; filter: grayscale(1); }
 #search-helper-popup .sh-tile.dragging { opacity: 0.4; }
+/* Settings popup: dimmed backdrop behind it */
 #search-helper-backdrop { display: none; position: fixed; inset: 0; z-index: 10000; background: #0006; }
 #search-helper-backdrop.open { display: block; }
+/* ===== Page-specific icon layouts ===== */
+/* Quickstock */
 .qs-search-helper a { display: inline-block !important; }
+/* Faerie Quests: keep icons on one line */
+.fq-item > .search-helper { white-space: nowrap; }
+/* Quest Log daily rewards */
+.ql-reward > .search-helper, .ql-bonus-reward > .search-helper { display: flex !important; flex-flow: row wrap; justify-content: center; gap: 2px 3px; }
+/* Trading Post */
 #app .tp-search-helper { display: flex !important; flex-flow: row wrap; gap: 2px 3px; margin: 3px 0; }
 #app .tp-search-items { overflow-y: auto; }
-.sdb-item-info > .search-helper, .sdb-grid-item-content > .search-helper, .closet-list-item > div > .search-helper, .closet-grid-item-content > .search-helper { display: flex !important; flex-flow: row wrap; gap: 2px 3px; align-items: center; margin: 0; padding: 0; }
-.donation-search-helper { display: flex !important; flex-flow: row wrap; justify-content: center; gap: 2px 3px; margin: 4px 0; padding: 0; }
-.donation-search-helper a { display: inline-block !important; width: auto; margin: 0; padding: 0; }
-.sdb-item-info > .search-helper a, .sdb-grid-item-content > .search-helper a, .closet-list-item > div > .search-helper a, .closet-grid-item-content > .search-helper a { display: inline-block !important; }
-#items > li.attic-search-item { height: auto; min-height: 230px; }
-#items > li.attic-search-item > .search-helper { display: flex !important; flex-flow: row wrap; justify-content: center; gap: 2px 3px; }
-.fq-item > .search-helper { white-space: nowrap; }
+/* User shop fronts */
 .bsp-item > .search-helper { display: flex !important; flex-flow: row wrap; justify-content: center; gap: 2px 3px; margin: 4px 0 0; padding: 0; }
 .bsp-item > .search-helper a { display: inline-block !important; }
+/* Money Tree donations and Thrift Shoppe: centered row */
+.donation-search-helper { display: flex !important; flex-flow: row wrap; justify-content: center; gap: 2px 3px; margin: 4px 0; padding: 0; }
+.donation-search-helper a { display: inline-block !important; width: auto; margin: 0; padding: 0; }
+/* Almost Abandoned Attic: let cards grow to fit the icons */
+#items > li.attic-search-item { height: auto; min-height: 230px; }
+#items > li.attic-search-item > .search-helper { display: flex !important; flex-flow: row wrap; justify-content: center; gap: 2px 3px; }
+/* Safety Deposit Box and Closet: icons in a wrapping row, each icon inline */
+.sdb-item-info > .search-helper, .sdb-grid-item-content > .search-helper, .closet-list-item > div > .search-helper, .closet-grid-item-content > .search-helper { display: flex !important; flex-flow: row wrap; gap: 2px 3px; align-items: center; margin: 0; padding: 0; }
+.sdb-item-info > .search-helper a, .sdb-grid-item-content > .search-helper a, .closet-list-item > div > .search-helper a, .closet-grid-item-content > .search-helper a { display: inline-block !important; }
+/* Safety Deposit Box and Closet: disable pointer events on the item wrappers... */
 .sdb-table .sdb-item-cell, .sdb-grid .sdb-grid-item, .closet-list-row .closet-list-item, .closet-grid .closet-grid-item { pointer-events: none; }
-.ql-reward > .search-helper, .ql-bonus-reward > .search-helper { display: flex !important; flex-flow: row wrap; justify-content: center; gap: 2px 3px; }
+/* ...and re-enable them on the children so the icons stay clickable */
 .sdb-table .sdb-item-cell > *, .sdb-grid .sdb-grid-item > *, .closet-list-row .closet-list-item > *, .closet-grid .closet-grid-item > * { pointer-events: auto; }
 </style>`).appendTo("head");
 
