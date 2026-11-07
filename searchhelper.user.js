@@ -425,7 +425,8 @@ function addSearchSettingsMenu() {
     const render = () => {
         docks.each(function () {
             const dock = $(this);
-            dock.empty().append(searchLayout[dock.data("dock")].map(tileFor));
+            dock.empty();
+            searchLayout[dock.data("dock")].forEach((key) => dock.append(tileFor(key)));
         });
     };
 
