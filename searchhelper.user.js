@@ -77,6 +77,9 @@ jQuery.fn.exists = function () {
 // if the active pet dropdown image is there, we're in beta
 const isBeta = $("[class^='nav-pet-menu-icon']").exists();
 
+// SDB grid categories whose items can be worn (grid cards carry no wearable flag)
+const WEARABLE_CATEGORIES = ["Clothes", "Neocash"];
+
 const linkmap = {
     // for urls and images for each search type
     // if the image is not from images.neopets.com, base64 it
@@ -785,7 +788,7 @@ if (isBeta) {
                 const contentText = $content.text();
                 appendItemLinks($content, itemname, {
                     cash: category === "Neocash",
-                    wearable: category === "Clothes",
+                    wearable: WEARABLE_CATEGORIES.includes(category),
                     tradeable: !contentText.includes("(no trade)"),
                     itemid: -1,
                 });
