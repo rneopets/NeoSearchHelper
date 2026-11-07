@@ -328,6 +328,38 @@ if (inURL("/island/tradingpost.phtml")) {
     tradingPostObserver.observe(document.documentElement, watchOptions);
 }
 
+// Modern auction listings, Genie results, and lot details share these item nodes.
+if (inURL("/auctions.phtml") || inURL("/genie.phtml")) {
+    function addAuctionLinks() {
+        const $names = $(".ah2_itemname");
+        $(".ah2_row").each(function () {
+            $names.push(...$(this).children("td").eq(2)
+                .children("a[href*='auction_id=']").get());
+        });
+        $names.each(function () {
+            const $name = $(this);
+            const itemname = $name.text().trim();
+            const $existing = $name.next(".auction-search-helper");
+            if (!itemname) {
+                $existing.remove();
+            } else if ($existing.attr("data-item-name") !== itemname) {
+                $existing.remove();
+                const $links = makelinks(itemname).addClass("auction-search-helper");
+                isolateItemLinks($links);
+                $name.after($links);
+            }
+        });
+    }
+    const auctionWatchOptions = { childList: true, subtree: true, characterData: true };
+    const auctionObserver = new MutationObserver(function () {
+        auctionObserver.disconnect();
+        addAuctionLinks();
+        auctionObserver.observe(document.documentElement, auctionWatchOptions);
+    });
+    addAuctionLinks();
+    auctionObserver.observe(document.documentElement, auctionWatchOptions);
+}
+
 function isolateItemLinks($links) {
     $links.find("a").each(function () {
         const el = this;
@@ -892,7 +924,6 @@ if (isBeta) {
     /*
      Adds the search icons under things in:
      Redeeming Cash
-     Auction Bidding Page
      Your Shop Price Page
      Coincidence
      MI Training
@@ -929,22 +960,6 @@ if (isBeta) {
                     .before("<br>")
                     .after(makelinks($(v).text(), extras));
             });
-    }
-
-    // Auctions
-    if (inURL("auction_id")) {
-        let nameb = $("b:contains('owned by')");
-        let fixname = nameb.html();
-        fixname = fixname.substr(0, fixname.indexOf(" (own")); // remove "owned by..."
-        nameb.parent().find("img").after(makelinks(fixname));
-    }
-    if (inURL("auctions.phtml") || inURL("genie.phtml")) {
-        $("a[href*='?type=bids&auction_id=']:not(:has('img'))").each(
-            function (index, element) {
-                const itemname = $(element).text();
-                $(element).after(makelinks(itemname));
-            },
-        );
     }
 
     // Coincidence
