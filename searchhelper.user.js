@@ -283,7 +283,7 @@ function isolateItemLinks($links) {
 }
 
 function appendItemLinks($host, itemname, extras) {
-    const $links = makelinks(itemname, extras);
+    const $links = makelinks(itemname, extras).attr("data-item-name", itemname);
     isolateItemLinks($links);
     $host.append($links);
 }
