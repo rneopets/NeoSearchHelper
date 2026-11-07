@@ -368,7 +368,8 @@ function applySearchLayout() {
         document.head.append(style);
     }
     style.textContent = searchLayout.inactive
-        .map((key) => `.search-helper > a[data-search-type='${key}'] { display: none !important; }`)
+        // doubled class beats the page-specific "a { display: inline-block !important }" rules
+        .map((key) => `.search-helper.search-helper > a[data-search-type='${key}'] { display: none !important; }`)
         .join("\n");
 
     // re-sort helpers that were built before the layout changed
