@@ -187,13 +187,14 @@ let searchLayout = { active: [], inactive: [] };
 function normalizeSearchLayout(saved) {
     const known = Object.keys(linkmap);
     const seen = new Set();
-    const keep = (list) => (Array.isArray(list) ? list : []).filter((key) => {
-        if (!known.includes(key) || seen.has(key)) {
-            return false;
-        }
-        seen.add(key);
-        return true;
-    });
+    const keep = (list) =>
+        (Array.isArray(list) ? list : []).filter((key) => {
+            if (!known.includes(key) || seen.has(key)) {
+                return false;
+            }
+            seen.add(key);
+            return true;
+        });
     const active = keep(saved?.active);
     const inactive = keep(saved?.inactive);
     // icons missing from the saved layout (e.g. added in an update) start out active
@@ -202,7 +203,9 @@ function normalizeSearchLayout(saved) {
 }
 
 try {
-    searchLayout = normalizeSearchLayout(JSON.parse(localStorage.getItem(searchLayoutStorageKey)));
+    searchLayout = normalizeSearchLayout(
+        JSON.parse(localStorage.getItem(searchLayoutStorageKey)),
+    );
 } catch (_) {
     /* Storage may be unavailable or corrupt; fall back to the default layout. */
     searchLayout = normalizeSearchLayout(null);
@@ -217,13 +220,18 @@ if (isBeta) {
 }
 
 function escapeSearchAttribute(value) {
-    return String(value).replaceAll("&", "&amp;").replaceAll("'", "&#39;")
-        .replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("'", "&#39;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
 }
 
 function combiner(item, url, image, type) {
     url = url.replace("%s", () => item);
-    type = type || Object.keys(linkmap).find((key) => linkmap[key].img === image);
+    type =
+        type || Object.keys(linkmap).find((key) => linkmap[key].img === image);
     const label = linkmap[type]?.name || "Search item";
     return `<a tabindex='-1' target='_blank' data-search-type='${type}' title='${label}' href='${escapeSearchAttribute(url)}'><img src='${image}' class='searchimg'></a>`;
 }
@@ -350,8 +358,11 @@ function makelinks(item, extras) {
     // Changed quests to use div, because p makes the text spill out of RE box
     const element =
         isFaerieQuestPage || inPath("/quickstock.phtml") ? "div" : "p";
-    const helper = $(`<${element} class='search-helper'>${searchLayoutOrder().map((key) => links[key] || "").join("")}</${element}>`)
-        .attr("data-item-name", item);
+    const helper = $(
+        `<${element} class='search-helper'>${searchLayoutOrder()
+            .map((key) => links[key] || "")
+            .join("")}</${element}>`,
+    ).attr("data-item-name", item);
 
     return helper;
 }
@@ -369,7 +380,10 @@ function applySearchLayout() {
     }
     style.textContent = searchLayout.inactive
         // doubled class beats the page-specific "a { display: inline-block !important }" rules
-        .map((key) => `.search-helper.search-helper > a[data-search-type='${key}'] { display: none !important; }`)
+        .map(
+            (key) =>
+                `.search-helper.search-helper > a[data-search-type='${key}'] { display: none !important; }`,
+        )
         .join("\n");
 
     // re-sort helpers that were built before the layout changed
@@ -383,8 +397,14 @@ function applySearchLayout() {
 }
 
 function saveSearchLayout() {
-    try { localStorage.setItem(searchLayoutStorageKey, JSON.stringify(searchLayout)); }
-    catch (_) { /* Changes still apply for this page when storage is blocked. */ }
+    try {
+        localStorage.setItem(
+            searchLayoutStorageKey,
+            JSON.stringify(searchLayout),
+        );
+    } catch (_) {
+        /* Changes still apply for this page when storage is blocked. */
+    }
 }
 
 applySearchLayout();
@@ -396,7 +416,8 @@ function addSearchSettingsMenu() {
     }
 
     const backdrop = $("<div id='search-helper-backdrop'></div>");
-    const popup = $(`<div class='togglePopup__2020 movePopup__2020' id='search-helper-popup'>
+    const popup =
+        $(`<div class='togglePopup__2020 movePopup__2020' id='search-helper-popup'>
         <div class='popup-header__2020'>
             <button type='button' class='popup-exit button-default__2020 button-red__2020'><div class='popup-exit-icon'></div></button>
             <h3>Search Helper Icons</h3>
@@ -418,15 +439,23 @@ function addSearchSettingsMenu() {
     </div>`);
     const docks = popup.find(".sh-dock");
 
-    const tileFor = (key) => $("<div class='sh-tile' draggable='true' tabindex='0' role='button'></div>")
-        .attr({ "data-key": key, title: linkmap[key].name })
-        .append($("<img>").attr("src", linkmap[key].img), $("<span></span>").text(linkmap[key].name));
+    const tileFor = (key) =>
+        $(
+            "<div class='sh-tile' draggable='true' tabindex='0' role='button'></div>",
+        )
+            .attr({ "data-key": key, title: linkmap[key].name })
+            .append(
+                $("<img>").attr("src", linkmap[key].img),
+                $("<span></span>").text(linkmap[key].name),
+            );
 
     const render = () => {
         docks.each(function () {
             const dock = $(this);
             dock.empty();
-            searchLayout[dock.data("dock")].forEach((key) => dock.append(tileFor(key)));
+            searchLayout[dock.data("dock")].forEach((key) =>
+                dock.append(tileFor(key)),
+            );
         });
     };
 
@@ -434,9 +463,12 @@ function addSearchSettingsMenu() {
     const commit = () => {
         docks.each(function () {
             const dock = $(this);
-            searchLayout[dock.data("dock")] = dock.children(".sh-tile").map(function () {
-                return $(this).attr("data-key");
-            }).get();
+            searchLayout[dock.data("dock")] = dock
+                .children(".sh-tile")
+                .map(function () {
+                    return $(this).attr("data-key");
+                })
+                .get();
         });
         saveSearchLayout();
         applySearchLayout();
@@ -446,7 +478,10 @@ function addSearchSettingsMenu() {
     popup.on("dragstart", ".sh-tile", function (event) {
         dragging = this;
         event.originalEvent.dataTransfer.effectAllowed = "move";
-        event.originalEvent.dataTransfer.setData("text/plain", $(this).attr("data-key"));
+        event.originalEvent.dataTransfer.setData(
+            "text/plain",
+            $(this).attr("data-key"),
+        );
         $(this).addClass("dragging");
     });
     popup.on("dragend", ".sh-tile", function () {
@@ -461,10 +496,17 @@ function addSearchSettingsMenu() {
         event.preventDefault();
         $(this).addClass("over");
         const { clientX, clientY } = event.originalEvent;
-        const before = $(this).children(".sh-tile").not(dragging).toArray().find((tile) => {
-            const rect = tile.getBoundingClientRect();
-            return clientY < rect.bottom && clientX < rect.left + rect.width / 2;
-        });
+        const before = $(this)
+            .children(".sh-tile")
+            .not(dragging)
+            .toArray()
+            .find((tile) => {
+                const rect = tile.getBoundingClientRect();
+                return (
+                    clientY < rect.bottom &&
+                    clientX < rect.left + rect.width / 2
+                );
+            });
         if (before) {
             $(dragging).insertBefore(before);
         } else {
@@ -484,11 +526,18 @@ function addSearchSettingsMenu() {
 
     // click / keyboard fallback: move to the other dock
     popup.on("click keydown", ".sh-tile", function (event) {
-        if (event.type === "keydown" && event.key !== "Enter" && event.key !== " ") {
+        if (
+            event.type === "keydown" &&
+            event.key !== "Enter" &&
+            event.key !== " "
+        ) {
             return;
         }
         event.preventDefault();
-        const target = $(this).parent().attr("data-dock") === "active" ? "inactive" : "active";
+        const target =
+            $(this).parent().attr("data-dock") === "active"
+                ? "inactive"
+                : "active";
         $(this).appendTo(docks.filter(`[data-dock='${target}']`));
         commit();
     });
@@ -506,7 +555,9 @@ function addSearchSettingsMenu() {
         popup.toggleClass("open", open);
         backdrop.toggleClass("open", open);
     };
-    popup.find(".popup-exit, .popup-footer__2020 button").on("click", () => setOpen(false));
+    popup
+        .find(".popup-exit, .popup-footer__2020 button")
+        .on("click", () => setOpen(false));
     backdrop.on("click", () => setOpen(false));
     $(document).on("keydown", (event) => {
         if (event.key === "Escape") {
@@ -515,7 +566,8 @@ function addSearchSettingsMenu() {
     });
     $("body").append(backdrop, popup);
 
-    const menuItem = $(`<a href='#' id='search-helper-menu'><li class='profile-linkflex'>
+    const menuItem =
+        $(`<a href='#' id='search-helper-menu'><li class='profile-linkflex'>
         <div class='profile-dropdown-link-icon' style="background-image: url('${linkmap.ssw.img}'); background-size: contain; background-repeat: no-repeat;"></div>
         <h3>Search Helper</h3>
     </li></a>`);
@@ -557,10 +609,14 @@ if (inPath("/island/tradingpost.phtml")) {
     function addTradingPostLinks() {
         const tradingPostRoot = document.getElementById("app");
         if (!tradingPostRoot) return;
-        const $names = $(tradingPostRoot).find(".item-name-text, .tp-grid-item-name");
-        $(tradingPostRoot).find("img[src*='/items/']").each(function () {
-            $names.push(...$(this).parent().siblings("p").get());
-        });
+        const $names = $(tradingPostRoot).find(
+            ".item-name-text, .tp-grid-item-name",
+        );
+        $(tradingPostRoot)
+            .find("img[src*='/items/']")
+            .each(function () {
+                $names.push(...$(this).parent().siblings("p").get());
+            });
         $names.each(function () {
             const $name = $(this);
             const itemname = $name.text().trim();
@@ -571,7 +627,9 @@ if (inPath("/island/tradingpost.phtml")) {
                 $existing.remove();
                 const $links = makelinks(itemname, {
                     cash: false,
-                    wearable: /\(wearable\)/i.test($name.siblings(".tp-grid-item-subname").text()),
+                    wearable: /\(wearable\)/i.test(
+                        $name.siblings(".tp-grid-item-subname").text(),
+                    ),
                 }).addClass("tp-search-helper");
                 isolateItemLinks($links);
                 $name.after($links);
@@ -579,7 +637,11 @@ if (inPath("/island/tradingpost.phtml")) {
             }
         });
     }
-    const watchOptions = { childList: true, subtree: true, characterData: true };
+    const watchOptions = {
+        childList: true,
+        subtree: true,
+        characterData: true,
+    };
     const tradingPostObserver = new MutationObserver(function () {
         tradingPostObserver.disconnect();
         addTradingPostLinks();
@@ -588,7 +650,6 @@ if (inPath("/island/tradingpost.phtml")) {
     addTradingPostLinks();
     tradingPostObserver.observe(document.documentElement, watchOptions);
 }
-
 
 function isolateItemLinks($links) {
     $links.find("a").each(function () {
@@ -606,13 +667,11 @@ function isolateItemLinks($links) {
     });
 }
 
-
 function appendItemLinks($host, itemname, extras) {
     const $links = makelinks(itemname, extras);
     isolateItemLinks($links);
     $host.append($links);
 }
-
 
 if (isBeta) {
     /*
@@ -647,8 +706,13 @@ if (isBeta) {
         function addAuctionLinks() {
             const $names = $(".ah2_itemname");
             $(".ah2_row").each(function () {
-                $names.push(...$(this).children("td").eq(2)
-                    .children("a[href*='auction_id=']").get());
+                $names.push(
+                    ...$(this)
+                        .children("td")
+                        .eq(2)
+                        .children("a[href*='auction_id=']")
+                        .get(),
+                );
             });
             $names.each(function () {
                 const $name = $(this);
@@ -658,17 +722,26 @@ if (isBeta) {
                     $existing.remove();
                 } else if ($existing.attr("data-item-name") !== itemname) {
                     $existing.remove();
-                    const $links = makelinks(itemname).addClass("auction-search-helper");
+                    const $links = makelinks(itemname).addClass(
+                        "auction-search-helper",
+                    );
                     isolateItemLinks($links);
                     $name.after($links);
                 }
             });
         }
-        const auctionWatchOptions = { childList: true, subtree: true, characterData: true };
+        const auctionWatchOptions = {
+            childList: true,
+            subtree: true,
+            characterData: true,
+        };
         const auctionObserver = new MutationObserver(function () {
             auctionObserver.disconnect();
             addAuctionLinks();
-            auctionObserver.observe(document.documentElement, auctionWatchOptions);
+            auctionObserver.observe(
+                document.documentElement,
+                auctionWatchOptions,
+            );
         });
         addAuctionLinks();
         auctionObserver.observe(document.documentElement, auctionWatchOptions);
@@ -678,14 +751,21 @@ if (isBeta) {
     if (inPath("/donations.phtml")) {
         $(".moneytree-grid > .donated").each(function () {
             const $card = $(this);
-            const $claim = $card.children("a[href*='takedonation_new.phtml']").first();
+            const $claim = $card
+                .children("a[href*='takedonation_new.phtml']")
+                .first();
             const itemname = ($claim.attr("data-name") || "").trim();
-            if (itemname && ($claim.attr("data-img") || "").includes("/items/") &&
-                !$card.children(".search-helper").length) {
+            if (
+                itemname &&
+                ($claim.attr("data-img") || "").includes("/items/") &&
+                !$card.children(".search-helper").length
+            ) {
                 appendItemLinks($card, itemname, {
                     cash: $claim.children(".item-img").hasClass("nc"),
                 });
-                $card.children(".search-helper").addClass("donation-search-helper");
+                $card
+                    .children(".search-helper")
+                    .addClass("donation-search-helper");
             }
         });
     }
@@ -713,9 +793,11 @@ if (isBeta) {
         }
 
         // due to inconsistencies in the page, we will attempt to do two different kinds of search helper adds
-        $(".item-img + .item-name").find("b").each(function (index, element) {
-            addOrRefresh(element);
-        });
+        $(".item-img + .item-name")
+            .find("b")
+            .each(function (index, element) {
+                addOrRefresh(element);
+            });
 
         $("img[src*='/items/'] + br + p > b").each(function (index, element) {
             addOrRefresh(element);
@@ -727,19 +809,26 @@ if (isBeta) {
         });
 
         // img followed directly by p.item-name, no br
-        $("img[src*='/items/'] + p.item-name > b").each(function (index, element) {
-            addOrRefresh(element);
-        });
+        $("img[src*='/items/'] + p.item-name > b").each(
+            function (index, element) {
+                addOrRefresh(element);
+            },
+        );
     }
 
     // Main Shops
-    if (inPath("/objects.phtml") || searchHelperPageURL.searchParams.get("type") === "shop") {
+    if (
+        inPath("/objects.phtml") ||
+        searchHelperPageURL.searchParams.get("type") === "shop"
+    ) {
         const shopId = searchHelperPageURL.searchParams.get("obj_type");
         $(".item-img + .item-name").each(function (index, element) {
-            $(element).after(makelinks($(element).text(), {
-                cash: false,
-                wearable: WEARABLE_SHOP_IDS.includes(shopId),
-            }));
+            $(element).after(
+                makelinks($(element).text(), {
+                    cash: false,
+                    wearable: WEARABLE_SHOP_IDS.includes(shopId),
+                }),
+            );
         });
     }
 
@@ -749,24 +838,37 @@ if (isBeta) {
         const shopRegion = document.querySelector(".bsp-page");
         if (shopRegion) {
             function addUserShopLinks() {
-                $(shopRegion).find(".bsp-grid > .bsp-item").each(function () {
-                    const $item = $(this);
-                    const itemname = $item
-                        .find(".bsp-item__buy .bsp-item__name")
-                        .first().text().trim();
-                    if (itemname && $item.children(".search-helper").attr("data-item-name") !== itemname) {
-                        $item.children(".search-helper").remove();
-                        // Keep search links outside the purchase button.
-                        appendItemLinks($item, itemname);
-                    }
-                });
+                $(shopRegion)
+                    .find(".bsp-grid > .bsp-item")
+                    .each(function () {
+                        const $item = $(this);
+                        const itemname = $item
+                            .find(".bsp-item__buy .bsp-item__name")
+                            .first()
+                            .text()
+                            .trim();
+                        if (
+                            itemname &&
+                            $item
+                                .children(".search-helper")
+                                .attr("data-item-name") !== itemname
+                        ) {
+                            $item.children(".search-helper").remove();
+                            // Keep search links outside the purchase button.
+                            appendItemLinks($item, itemname);
+                        }
+                    });
             }
 
             let userShopT = 0;
             new MutationObserver(function () {
                 clearTimeout(userShopT);
                 userShopT = setTimeout(addUserShopLinks, 50);
-            }).observe(shopRegion, { childList: true, subtree: true, characterData: true });
+            }).observe(shopRegion, {
+                childList: true,
+                subtree: true,
+                characterData: true,
+            });
             addUserShopLinks();
         }
     }
@@ -777,12 +879,18 @@ if (isBeta) {
         function addInventoryLinks() {
             $(".item-img + .item-name").each(function (index, element) {
                 // this will add more and more if you do things like SSW searching, so check first
-                if ($(element).next(".search-helper").attr("data-item-name") !== $(element).text().trim()) {
+                if (
+                    $(element).next(".search-helper").attr("data-item-name") !==
+                    $(element).text().trim()
+                ) {
                     $(element).next(".search-helper").remove();
                     let extras = {
                         cash:
-                            (($(element).siblings(".item-img").attr("data-itemset") ||
-                                document.getElementById("invDisplay")?.dataset.type) === "nc"),
+                            ($(element)
+                                .siblings(".item-img")
+                                .attr("data-itemset") ||
+                                document.getElementById("invDisplay")?.dataset
+                                    .type) === "nc",
                         wearable:
                             $(element).parent().find(":contains('wearable')")
                                 .length > 0,
@@ -802,7 +910,9 @@ if (isBeta) {
             clearTimeout(inventoryT);
             inventoryT = setTimeout(addInventoryLinks, 50);
         }).observe(document.getElementById("invDisplay") || document.body, {
-            childList: true, subtree: true, characterData: true,
+            childList: true,
+            subtree: true,
+            characterData: true,
         });
     }
 
@@ -875,7 +985,9 @@ if (isBeta) {
     // Illusen & Jhudora
     const $faerieImg = $(".faerie-img");
     if ($faerieImg.exists()) {
-        const $question = $faerieImg.nextAll("p:contains('Where is my')").first();
+        const $question = $faerieImg
+            .nextAll("p:contains('Where is my')")
+            .first();
         const itemname = $question.children("b").first().text().trim();
         const $image = $question.nextAll("img[src*='/items/']").first();
         if (itemname && $image.length) {
@@ -887,7 +999,10 @@ if (isBeta) {
 
     // Shop Wiz Auto-Exact
     // TODO: tbh this shouldn't be in this userscript
-    if (searchHelperPageURL.pathname === "/shops/wizard.phtml" && searchHelperPageURL.searchParams.has("string")) {
+    if (
+        searchHelperPageURL.pathname === "/shops/wizard.phtml" &&
+        searchHelperPageURL.searchParams.has("string")
+    ) {
         $("#criteria").val("exact");
     }
 
@@ -902,29 +1017,42 @@ if (isBeta) {
 
     // Quest Log Daily Rewards
     if (inPath("/questlog/")) {
-        const questLogContent = document.getElementById("quest-log-app") ||
+        const questLogContent =
+            document.getElementById("quest-log-app") ||
             document.getElementById("QuestLogContent");
         function addQuestLogLinks() {
-            $(questLogContent || document).find(
-                ".ql-reward > .ql-reward-label, .ql-bonus-reward > .ql-bonus-name",
-            ).each(function () {
-                const $name = $(this);
-                const itemname = $name.text().trim();
-                const $existing = $name.siblings(".search-helper");
-                if (!itemname || $name.closest(".ql-reward-np").length || /^[\d,]+\s+NP$/i.test(itemname)) {
-                    $existing.remove();
-                } else if ($existing.length !== 1 ||
-                    $existing.attr("data-item-name") !== itemname) {
-                    $existing.remove();
-                    $name.after(makelinks(itemname));
-                }
-            });
+            $(questLogContent || document)
+                .find(
+                    ".ql-reward > .ql-reward-label, .ql-bonus-reward > .ql-bonus-name",
+                )
+                .each(function () {
+                    const $name = $(this);
+                    const itemname = $name.text().trim();
+                    const $existing = $name.siblings(".search-helper");
+                    if (
+                        !itemname ||
+                        $name.closest(".ql-reward-np").length ||
+                        /^[\d,]+\s+NP$/i.test(itemname)
+                    ) {
+                        $existing.remove();
+                    } else if (
+                        $existing.length !== 1 ||
+                        $existing.attr("data-item-name") !== itemname
+                    ) {
+                        $existing.remove();
+                        $name.after(makelinks(itemname));
+                    }
+                });
         }
 
         addQuestLogLinks();
 
         if (questLogContent) {
-            const watchOptions = { childList: true, subtree: true, characterData: true };
+            const watchOptions = {
+                childList: true,
+                subtree: true,
+                characterData: true,
+            };
             const observer = new MutationObserver(function (mutations, obs) {
                 // Ignore our own link changes while Vue and other scripts update rewards.
                 obs.disconnect();
@@ -943,7 +1071,10 @@ if (isBeta) {
                 function (index, element) {
                     const itemname = $(element).text().trim();
                     const $existing = $(element).siblings(".search-helper");
-                    if (itemname && $existing.attr("data-item-name") !== itemname) {
+                    if (
+                        itemname &&
+                        $existing.attr("data-item-name") !== itemname
+                    ) {
                         $existing.remove();
                         const $links = makelinks(itemname);
                         isolateItemLinks($links);
@@ -952,8 +1083,15 @@ if (isBeta) {
                 },
             );
         }
-        const taviOptions = { childList: true, subtree: true, characterData: true };
-        const taviObserver = new MutationObserver(function (mutations, observer) {
+        const taviOptions = {
+            childList: true,
+            subtree: true,
+            characterData: true,
+        };
+        const taviObserver = new MutationObserver(function (
+            mutations,
+            observer,
+        ) {
             observer.disconnect();
             TaviQuest();
             observer.observe(document.documentElement, taviOptions);
@@ -1036,7 +1174,11 @@ if (isBeta) {
                 const $row = $(row);
                 const $info = $row.find(".sdb-item-info").first();
                 const itemname = $info.find(".sdb-item-name").text().trim();
-                if (!itemname || $info.children(".search-helper").attr("data-item-name") === itemname) {
+                if (
+                    !itemname ||
+                    $info.children(".search-helper").attr("data-item-name") ===
+                        itemname
+                ) {
                     return;
                 }
                 $info.children(".search-helper").remove();
@@ -1061,7 +1203,12 @@ if (isBeta) {
                     .find(".sdb-grid-item-name")
                     .text()
                     .trim();
-                if (!itemname || $content.children(".search-helper").attr("data-item-name") === itemname) {
+                if (
+                    !itemname ||
+                    $content
+                        .children(".search-helper")
+                        .attr("data-item-name") === itemname
+                ) {
                     return;
                 }
                 $content.children(".search-helper").remove();
@@ -1164,14 +1311,20 @@ if (isBeta) {
     }
 
     // Your Shop
-    if (searchHelperPageURL.searchParams.get("type") === "your" || inPath("/market_your.phtml")) {
+    if (
+        searchHelperPageURL.searchParams.get("type") === "your" ||
+        inPath("/market_your.phtml")
+    ) {
         $(".market-your-item__name").each(function (index, element) {
             appendItemLinks($(element).parent(), $(element).text());
         });
     }
 
     // Your Shop's Sales History
-    if (searchHelperPageURL.pathname === "/market.phtml" && searchHelperPageURL.searchParams.get("type") === "sales") {
+    if (
+        searchHelperPageURL.pathname === "/market.phtml" &&
+        searchHelperPageURL.searchParams.get("type") === "sales"
+    ) {
         $(".mkt-page table tr").each(function (index, element) {
             const cell = $(element).find("td").eq(1);
             if (cell.attr("bgcolor") === "#ffffcc") {
@@ -1214,8 +1367,13 @@ if (isBeta) {
             const $cell = $claim.closest("td");
             const itemname = $claim.children("div").eq(1).text().trim();
             if (itemname && !$cell.children(".search-helper").length) {
-                appendItemLinks($cell, itemname, { cash: false, wearable: true });
-                $cell.children(".search-helper").addClass("donation-search-helper");
+                appendItemLinks($cell, itemname, {
+                    cash: false,
+                    wearable: true,
+                });
+                $cell
+                    .children(".search-helper")
+                    .addClass("donation-search-helper");
             }
         });
     }
@@ -1254,33 +1412,46 @@ if (isBeta) {
     }
 
     // MI Training
-    if (searchHelperPageURL.pathname === "/island/training.phtml" && searchHelperPageURL.searchParams.get("type") === "status") {
+    if (
+        searchHelperPageURL.pathname === "/island/training.phtml" &&
+        searchHelperPageURL.searchParams.get("type") === "status"
+    ) {
         $("img[src*='/items/']").each(function (k, v) {
             $(v).after(makelinks($(v).prev().text()));
         });
     }
 
     // Secret Training
-    if (searchHelperPageURL.pathname === "/island/fight_training.phtml" && searchHelperPageURL.searchParams.get("type") === "status") {
+    if (
+        searchHelperPageURL.pathname === "/island/fight_training.phtml" &&
+        searchHelperPageURL.searchParams.get("type") === "status"
+    ) {
         $("img[src*='/items/']").each(function (k, v) {
             $(v).after(makelinks($(v).prev().text()));
         });
     }
 
     // Ninja Weaponry purchase list
-    if (searchHelperPageURL.pathname === "/island/fight_training.phtml" &&
-        searchHelperPageURL.searchParams.get("type") === "purchase") {
-        $("a[href*='process_fight_training.phtml'][href*='type=buy']").each(function () {
-            const $cell = $(this).closest("td");
-            const itemname = $cell.children("b").first().text().trim();
-            if (itemname && !$cell.children(".search-helper").length) {
-                appendItemLinks($cell, itemname);
-            }
-        });
+    if (
+        searchHelperPageURL.pathname === "/island/fight_training.phtml" &&
+        searchHelperPageURL.searchParams.get("type") === "purchase"
+    ) {
+        $("a[href*='process_fight_training.phtml'][href*='type=buy']").each(
+            function () {
+                const $cell = $(this).closest("td");
+                const itemname = $cell.children("b").first().text().trim();
+                if (itemname && !$cell.children(".search-helper").length) {
+                    appendItemLinks($cell, itemname);
+                }
+            },
+        );
     }
 
     // KI Training
-    if (searchHelperPageURL.pathname === "/pirates/academy.phtml" && searchHelperPageURL.searchParams.get("type") === "status") {
+    if (
+        searchHelperPageURL.pathname === "/pirates/academy.phtml" &&
+        searchHelperPageURL.searchParams.get("type") === "status"
+    ) {
         $("img[src*='/items/']").each(function (k, v) {
             let nametd = $(v).parent();
             let itemname = nametd.parent().find("td > b").eq(0).text();
