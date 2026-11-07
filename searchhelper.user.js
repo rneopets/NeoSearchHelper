@@ -40,8 +40,8 @@
 // @match        *://*.neopets.com/thriftshoppe/index.phtml*
 // @match        *://*.neopets.com/winter/igloo.phtml*
 // @match        *://*.neopets.com/winter/snowfaerie*.phtml*
-// @match        *://*.neopets.com/questlog/
-// @match        *://*.neopets.com/games/teatime/
+// @match        *://*.neopets.com/questlog/*
+// @match        *://*.neopets.com/games/teatime/*
 // @icon         https://www.neopets.com/favicon.ico
 // @grant        none
 // ==/UserScript==
@@ -67,6 +67,7 @@ $(`<style type='text/css'>
 .bsp-item > .search-helper { display: flex !important; flex-flow: row wrap; justify-content: center; gap: 2px 3px; margin: 4px 0 0; padding: 0; }
 .bsp-item > .search-helper a { display: inline-block !important; }
 .sdb-table .sdb-item-cell, .sdb-grid .sdb-grid-item, .closet-list-row .closet-list-item, .closet-grid .closet-grid-item { pointer-events: none; }
+.ql-reward > .search-helper, .ql-bonus-reward > .search-helper { display: flex !important; flex-flow: row wrap; justify-content: center; gap: 2px 3px; }
 .sdb-table .sdb-item-cell > *, .sdb-grid .sdb-grid-item > *, .closet-list-row .closet-list-item > *, .closet-grid .closet-grid-item > * { pointer-events: auto; }
 </style>`).appendTo("head");
 
@@ -79,6 +80,9 @@ const isBeta = $("[class^='nav-pet-menu-icon']").exists();
 
 // obj_type ids of the main shops that stock wearables
 const WEARABLE_SHOP_IDS = ["4", "108"];
+
+// SDB grid categories whose items can be worn (grid cards carry no wearable flag)
+const WEARABLE_CATEGORIES = ["Clothes", "Neocash"];
 
 const linkmap = {
     // for urls and images for each search type
@@ -263,7 +267,8 @@ function makelinks(item, extras) {
     // Changed quests to use div, because p makes the text spill out of RE box
     const element =
         isFaerieQuestPage || inURL("quickstock.phtml") ? "div" : "p";
-    const helper = $(`<${element} class='search-helper'>${links}</${element}>`);
+    const helper = $(`<${element} class='search-helper'>${links}</${element}>`)
+        .attr("data-item-name", item);
 
     return helper;
 }
@@ -309,8 +314,7 @@ if (inURL("/island/tradingpost.phtml")) {
                 const $links = makelinks(itemname, {
                     cash: false,
                     wearable: /\(wearable\)/i.test($name.siblings(".tp-grid-item-subname").text()),
-                }).addClass("tp-search-helper")
-                    .attr("data-item-name", itemname);
+                }).addClass("tp-search-helper");
                 isolateItemLinks($links);
                 $name.after($links);
                 $name.closest(".bg-white").addClass("tp-search-items");
@@ -325,6 +329,38 @@ if (inURL("/island/tradingpost.phtml")) {
     });
     addTradingPostLinks();
     tradingPostObserver.observe(document.documentElement, watchOptions);
+}
+
+// Modern auction listings, Genie results, and lot details share these item nodes.
+if (inURL("/auctions.phtml") || inURL("/genie.phtml")) {
+    function addAuctionLinks() {
+        const $names = $(".ah2_itemname");
+        $(".ah2_row").each(function () {
+            $names.push(...$(this).children("td").eq(2)
+                .children("a[href*='auction_id=']").get());
+        });
+        $names.each(function () {
+            const $name = $(this);
+            const itemname = $name.text().trim();
+            const $existing = $name.next(".auction-search-helper");
+            if (!itemname) {
+                $existing.remove();
+            } else if ($existing.attr("data-item-name") !== itemname) {
+                $existing.remove();
+                const $links = makelinks(itemname).addClass("auction-search-helper");
+                isolateItemLinks($links);
+                $name.after($links);
+            }
+        });
+    }
+    const auctionWatchOptions = { childList: true, subtree: true, characterData: true };
+    const auctionObserver = new MutationObserver(function () {
+        auctionObserver.disconnect();
+        addAuctionLinks();
+        auctionObserver.observe(document.documentElement, auctionWatchOptions);
+    });
+    addAuctionLinks();
+    auctionObserver.observe(document.documentElement, auctionWatchOptions);
 }
 
 function isolateItemLinks($links) {
@@ -360,7 +396,7 @@ if (inURL("/donations.phtml")) {
 }
 
 function appendItemLinks($host, itemname, extras) {
-    const $links = makelinks(itemname, extras).attr("data-item-name", itemname);
+    const $links = makelinks(itemname, extras);
     isolateItemLinks($links);
     $host.append($links);
 }
@@ -418,9 +454,7 @@ if (isBeta) {
                 return;
             }
             $existing.remove();
-            $(element).after(
-                makelinks(name).attr("data-item-name", name),
-            );
+            $(element).after(makelinks(name));
         }
 
         // due to inconsistencies in the page, we will attempt to do two different kinds of search helper adds
@@ -485,14 +519,15 @@ if (isBeta) {
     // Inventory
     if (inURL("inventory")) {
         // the inventory system is more flexible than it used to be, so we have to do this a little differently
-        $(document).ajaxSuccess(function () {
+        function addInventoryLinks() {
             $(".item-img + .item-name").each(function (index, element) {
                 // this will add more and more if you do things like SSW searching, so check first
-                if (!hasSearchHelper(element)) {
+                if ($(element).next(".search-helper").attr("data-item-name") !== $(element).text().trim()) {
+                    $(element).next(".search-helper").remove();
                     let extras = {
                         cash:
-                            document.getElementById("invDisplay").dataset
-                                .type === "nc",
+                            (($(element).siblings(".item-img").attr("data-itemset") ||
+                                document.getElementById("invDisplay")?.dataset.type) === "nc"),
                         wearable:
                             $(element).parent().find(":contains('wearable')")
                                 .length > 0,
@@ -504,6 +539,15 @@ if (isBeta) {
                     $(element).after(makelinks($(element).text(), extras));
                 }
             });
+        }
+        addInventoryLinks();
+        $(document).ajaxSuccess(addInventoryLinks);
+        let inventoryT = 0;
+        new MutationObserver(function () {
+            clearTimeout(inventoryT);
+            inventoryT = setTimeout(addInventoryLinks, 50);
+        }).observe(document.getElementById("invDisplay") || document.body, {
+            childList: true, subtree: true, characterData: true,
         });
     }
 
@@ -603,62 +647,38 @@ if (isBeta) {
 
     // Quest Log Daily Rewards
     if (inURL("/questlog")) {
+        const questLogContent = document.getElementById("quest-log-app") ||
+            document.getElementById("QuestLogContent");
         function addQuestLogLinks() {
-            // re-rolls swap the item name in place, so refresh helpers whose item changed
-
-            // Daily rewards
-            $(".ql-reward-item + .ql-reward-label").each(function (k, v) {
-                let itemname = $(v).text();
-                const $existing = $(v).next(".search-helper");
-                if ($(v).closest(".ql-reward-np").length || /^[\d,]+ NP$/.test(itemname.trim())) {
-                    // ignore NP rewards, but drop any stale helper from a previous re-roll
+            $(questLogContent || document).find(
+                ".ql-reward > .ql-reward-label, .ql-bonus-reward > .ql-bonus-name",
+            ).each(function () {
+                const $name = $(this);
+                const itemname = $name.text().trim();
+                const $existing = $name.siblings(".search-helper");
+                if (!itemname || $name.closest(".ql-reward-np").length || /^[\d,]+\s+NP$/i.test(itemname)) {
                     $existing.remove();
-                    return;
-                }
-                if (!itemname.trim()) {
-                    // name may be briefly empty mid re-roll, keep the old helper for now
-                    return;
-                }
-                if ($existing.attr("data-item-name") === itemname) {
-                    return;
-                }
-                $existing.remove();
-                $(v).after(makelinks(itemname).attr("data-item-name", itemname));
-            });
-
-            // Bonus rewards
-            $(".ql-bonus-reward > .ql-bonus-name").each(function (k, v) {
-                let itemname = $(v).text();
-                const $existing = $(v).siblings(".search-helper");
-                if (/^[\d,]+ NP$/.test(itemname.trim())) {
-                    // ignore NP rewards, but drop any stale helper from a previous re-roll
+                } else if ($existing.length !== 1 ||
+                    $existing.attr("data-item-name") !== itemname) {
                     $existing.remove();
-                    return;
+                    $name.after(makelinks(itemname));
                 }
-                if (!itemname.trim()) {
-                    // name may be briefly empty mid re-roll, keep the old helper for now
-                    return;
-                }
-                if ($existing.attr("data-item-name") === itemname) {
-                    return;
-                }
-                $existing.remove();
-                $(v).after(makelinks(itemname).attr("data-item-name", itemname));
             });
         }
 
         addQuestLogLinks();
 
-        // re-rolls can replace #QuestLogContent entirely, so observe the whole page instead
-        let questLogT = 0;
-        new MutationObserver(function () {
-            clearTimeout(questLogT);
-            questLogT = setTimeout(addQuestLogLinks, 50);
-        }).observe(document.documentElement, {
-            childList: true,
-            subtree: true,
-            characterData: true,
-        });
+        if (questLogContent) {
+            const watchOptions = { childList: true, subtree: true, characterData: true };
+            const observer = new MutationObserver(function (mutations, obs) {
+                // Ignore our own link changes while Vue and other scripts update rewards.
+                obs.disconnect();
+                addQuestLogLinks();
+                obs.observe(questLogContent, watchOptions);
+            });
+
+            observer.observe(questLogContent, watchOptions);
+        }
     }
 
     // Tea Time With Tavi
@@ -666,16 +686,25 @@ if (isBeta) {
         function TaviQuest() {
             $(".ttwt-item > img[src*='/items/'] + span").each(
                 function (index, element) {
-                    if (!hasSearchHelper(element)) {
-                        $(element).after(makelinks($(element).text()));
+                    const itemname = $(element).text().trim();
+                    const $existing = $(element).siblings(".search-helper");
+                    if (itemname && $existing.attr("data-item-name") !== itemname) {
+                        $existing.remove();
+                        const $links = makelinks(itemname);
+                        isolateItemLinks($links);
+                        $(element).after($links);
                     }
                 },
             );
         }
-        TaviQuest();
-        $(document).ajaxSuccess(function () {
-            setTimeout(TaviQuest, 1000);
+        const taviOptions = { childList: true, subtree: true, characterData: true };
+        const taviObserver = new MutationObserver(function (mutations, observer) {
+            observer.disconnect();
+            TaviQuest();
+            observer.observe(document.documentElement, taviOptions);
         });
+        TaviQuest();
+        taviObserver.observe(document.documentElement, taviOptions);
     }
 
     // Igloo Garage Sale
@@ -750,14 +779,12 @@ if (isBeta) {
         function addSDBLinks() {
             $("table.sdb-table tbody tr").each(function (index, row) {
                 const $row = $(row);
-                if ($row.find(".search-helper").length) {
-                    return;
-                }
                 const $info = $row.find(".sdb-item-info").first();
                 const itemname = $info.find(".sdb-item-name").text().trim();
-                if (!itemname) {
+                if (!itemname || $info.children(".search-helper").attr("data-item-name") === itemname) {
                     return;
                 }
+                $info.children(".search-helper").remove();
                 const infoText = $info.text();
                 const chkId = $row
                     .find(".sdb-col-select .sdb-item-checkbox")
@@ -774,17 +801,15 @@ if (isBeta) {
 
             $(".sdb-grid .sdb-grid-item").each(function (index, item) {
                 const $item = $(item);
-                if ($item.find(".search-helper").length) {
-                    return;
-                }
                 const $content = $item.find(".sdb-grid-item-content").first();
                 const itemname = $content
                     .find(".sdb-grid-item-name")
                     .text()
                     .trim();
-                if (!itemname) {
+                if (!itemname || $content.children(".search-helper").attr("data-item-name") === itemname) {
                     return;
                 }
+                $content.children(".search-helper").remove();
                 const category = $content
                     .find(".sdb-grid-item-category")
                     .text()
@@ -792,7 +817,7 @@ if (isBeta) {
                 const contentText = $content.text();
                 appendItemLinks($content, itemname, {
                     cash: category === "Neocash",
-                    wearable: category === "Clothes",
+                    wearable: WEARABLE_CATEGORIES.includes(category),
                     tradeable: !contentText.includes("(no trade)"),
                     itemid: -1,
                 });
@@ -806,6 +831,7 @@ if (isBeta) {
         }).observe(document.documentElement, {
             childList: true,
             subtree: true,
+            characterData: true,
         });
         addSDBLinks();
     }
@@ -912,7 +938,6 @@ if (isBeta) {
     /*
      Adds the search icons under things in:
      Redeeming Cash
-     Auction Bidding Page
      Your Shop Price Page
      Coincidence
      MI Training
@@ -949,22 +974,6 @@ if (isBeta) {
                     .before("<br>")
                     .after(makelinks($(v).text(), extras));
             });
-    }
-
-    // Auctions
-    if (inURL("auction_id")) {
-        let nameb = $("b:contains('owned by')");
-        let fixname = nameb.html();
-        fixname = fixname.substr(0, fixname.indexOf(" (own")); // remove "owned by..."
-        nameb.parent().find("img").after(makelinks(fixname));
-    }
-    if (inURL("auctions.phtml") || inURL("genie.phtml")) {
-        $("a[href*='?type=bids&auction_id=']:not(:has('img'))").each(
-            function (index, element) {
-                const itemname = $(element).text();
-                $(element).after(makelinks(itemname));
-            },
-        );
     }
 
     // Coincidence
