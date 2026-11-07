@@ -40,7 +40,7 @@
 // @match        *://*.neopets.com/thriftshoppe/index.phtml*
 // @match        *://*.neopets.com/winter/igloo.phtml*
 // @match        *://*.neopets.com/winter/snowfaerie*.phtml*
-// @match        *://*.neopets.com/questlog/
+// @match        *://*.neopets.com/questlog/*
 // @match        *://*.neopets.com/games/teatime/
 // @icon         https://www.neopets.com/favicon.ico
 // @grant        none
@@ -67,6 +67,7 @@ $(`<style type='text/css'>
 .bsp-item > .search-helper { display: flex !important; flex-flow: row wrap; justify-content: center; gap: 2px 3px; margin: 4px 0 0; padding: 0; }
 .bsp-item > .search-helper a { display: inline-block !important; }
 .sdb-table .sdb-item-cell, .sdb-grid .sdb-grid-item, .closet-list-row .closet-list-item, .closet-grid .closet-grid-item { pointer-events: none; }
+.ql-reward > .search-helper, .ql-bonus-reward > .search-helper { display: flex !important; flex-flow: row wrap; justify-content: center; gap: 2px 3px; }
 .sdb-table .sdb-item-cell > *, .sdb-grid .sdb-grid-item > *, .closet-list-row .closet-list-item > *, .closet-grid .closet-grid-item > * { pointer-events: auto; }
 </style>`).appendTo("head");
 
@@ -597,62 +598,38 @@ if (isBeta) {
 
     // Quest Log Daily Rewards
     if (inURL("/questlog")) {
+        const questLogContent = document.getElementById("quest-log-app") ||
+            document.getElementById("QuestLogContent");
         function addQuestLogLinks() {
-            // re-rolls swap the item name in place, so refresh helpers whose item changed
-
-            // Daily rewards
-            $(".ql-reward-item + .ql-reward-label").each(function (k, v) {
-                let itemname = $(v).text();
-                const $existing = $(v).next(".search-helper");
-                if ($(v).closest(".ql-reward-np").length || /^[\d,]+ NP$/.test(itemname.trim())) {
-                    // ignore NP rewards, but drop any stale helper from a previous re-roll
+            $(questLogContent || document).find(
+                ".ql-reward > .ql-reward-label, .ql-bonus-reward > .ql-bonus-name",
+            ).each(function () {
+                const $name = $(this);
+                const itemname = $name.text().trim();
+                const $existing = $name.siblings(".search-helper");
+                if (!itemname || $name.closest(".ql-reward-np").length || /^[\d,]+\s+NP$/i.test(itemname)) {
                     $existing.remove();
-                    return;
-                }
-                if (!itemname.trim()) {
-                    // name may be briefly empty mid re-roll, keep the old helper for now
-                    return;
-                }
-                if ($existing.attr("data-item-name") === itemname) {
-                    return;
-                }
-                $existing.remove();
-                $(v).after(makelinks(itemname).attr("data-item-name", itemname));
-            });
-
-            // Bonus rewards
-            $(".ql-bonus-reward > .ql-bonus-name").each(function (k, v) {
-                let itemname = $(v).text();
-                const $existing = $(v).siblings(".search-helper");
-                if (/^[\d,]+ NP$/.test(itemname.trim())) {
-                    // ignore NP rewards, but drop any stale helper from a previous re-roll
+                } else if ($existing.length !== 1 ||
+                    $existing.attr("data-item-name") !== itemname) {
                     $existing.remove();
-                    return;
+                    $name.after(makelinks(itemname).attr("data-item-name", itemname));
                 }
-                if (!itemname.trim()) {
-                    // name may be briefly empty mid re-roll, keep the old helper for now
-                    return;
-                }
-                if ($existing.attr("data-item-name") === itemname) {
-                    return;
-                }
-                $existing.remove();
-                $(v).after(makelinks(itemname).attr("data-item-name", itemname));
             });
         }
 
         addQuestLogLinks();
 
-        // re-rolls can replace #QuestLogContent entirely, so observe the whole page instead
-        let questLogT = 0;
-        new MutationObserver(function () {
-            clearTimeout(questLogT);
-            questLogT = setTimeout(addQuestLogLinks, 50);
-        }).observe(document.documentElement, {
-            childList: true,
-            subtree: true,
-            characterData: true,
-        });
+        if (questLogContent) {
+            const watchOptions = { childList: true, subtree: true, characterData: true };
+            const observer = new MutationObserver(function (mutations, obs) {
+                // Ignore our own link changes while Vue and other scripts update rewards.
+                obs.disconnect();
+                addQuestLogLinks();
+                obs.observe(questLogContent, watchOptions);
+            });
+
+            observer.observe(questLogContent, watchOptions);
+        }
     }
 
     // Tea Time With Tavi
