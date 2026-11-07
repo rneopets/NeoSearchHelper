@@ -37,6 +37,7 @@
 // @match        *://*.neopets.com/safetydeposit.phtml*
 // @match        *://*.neopets.com/shops/wizard.phtml*
 // @match        *://*.neopets.com/space/coincidence.phtml*
+// @match        *://*.neopets.com/thriftshoppe/index.phtml*
 // @match        *://*.neopets.com/winter/igloo.phtml*
 // @match        *://*.neopets.com/winter/snowfaerie*.phtml*
 // @match        *://*.neopets.com/questlog/
@@ -359,6 +360,18 @@ function appendItemLinks($host, itemname, extras) {
     const $links = makelinks(itemname, extras).attr("data-item-name", itemname);
     isolateItemLinks($links);
     $host.append($links);
+}
+
+if (inURL("/thriftshoppe/index.phtml")) {
+    $("a[href^='javascript:take_donation(']").each(function () {
+        const $claim = $(this);
+        const $cell = $claim.closest("td");
+        const itemname = $claim.children("div").eq(1).text().trim();
+        if (itemname && !$cell.children(".search-helper").length) {
+            appendItemLinks($cell, itemname, { cash: false, wearable: true });
+            $cell.children(".search-helper").addClass("donation-search-helper");
+        }
+    });
 }
 
 if (isBeta) {
