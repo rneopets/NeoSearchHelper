@@ -654,7 +654,7 @@ if (isBeta) {
                 } else if ($existing.length !== 1 ||
                     $existing.attr("data-item-name") !== itemname) {
                     $existing.remove();
-                    $name.after(makelinks(itemname).attr("data-item-name", itemname));
+                    $name.after(makelinks(itemname));
                 }
             });
         }
