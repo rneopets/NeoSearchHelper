@@ -12,3 +12,9 @@ repos:
     hooks:
       - id: prettier
         files: \.user\.js$
+
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v10.14.0
+    hooks:
+      - id: eslint
+        files: \.user\.js$
