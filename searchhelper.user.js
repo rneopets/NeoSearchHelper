@@ -17,6 +17,7 @@
 // @match        *://*.neopets.com/generalstore.phtml*
 // @match        *://*.neopets.com/genie.phtml*
 // @match        *://*.neopets.com/halloween/esophagor*.phtml*
+// @match        *://*.neopets.com/halloween/garage.phtml*
 // @match        *://*.neopets.com/halloween/witchtower*.phtml*
 // @match        *://*.neopets.com/hospital.phtml*
 // @match        *://*.neopets.com/inventory.phtml*
@@ -59,6 +60,8 @@ $(`<style type='text/css'>
 .donation-search-helper { display: flex !important; flex-flow: row wrap; justify-content: center; gap: 2px 3px; margin: 4px 0; padding: 0; }
 .donation-search-helper a { display: inline-block !important; width: auto; margin: 0; padding: 0; }
 .sdb-item-info > .search-helper a, .sdb-grid-item-content > .search-helper a, .closet-list-item > div > .search-helper a, .closet-grid-item-content > .search-helper a { display: inline-block !important; }
+#items > li.attic-search-item { height: auto; min-height: 230px; }
+#items > li.attic-search-item > .search-helper { display: flex !important; flex-flow: row wrap; justify-content: center; gap: 2px 3px; }
 .fq-item > .search-helper { white-space: nowrap; }
 .bsp-item > .search-helper { display: flex !important; flex-flow: row wrap; justify-content: center; gap: 2px 3px; margin: 4px 0 0; padding: 0; }
 .bsp-item > .search-helper a { display: inline-block !important; }
@@ -902,6 +905,18 @@ if (isBeta) {
      Battledome
      Gallery Rankings
     */
+
+    // Almost Abandoned Attic
+    if (inURL("/halloween/garage.phtml")) {
+        $("#items > li[oii]").each(function () {
+            const $item = $(this);
+            const itemname = $item.attr("oname")?.trim();
+            if (itemname && !$item.children(".search-helper").length) {
+                $item.addClass("attic-search-item");
+                appendItemLinks($item, itemname);
+            }
+        });
+    }
 
     // Redeeming Cash
     if (inURL("process_cash_object")) {
