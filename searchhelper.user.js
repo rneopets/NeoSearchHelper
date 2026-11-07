@@ -566,37 +566,6 @@ if (inURL("/island/tradingpost.phtml")) {
     tradingPostObserver.observe(document.documentElement, watchOptions);
 }
 
-// Modern auction listings, Genie results, and lot details share these item nodes.
-if (inURL("/auctions.phtml") || inURL("/genie.phtml")) {
-    function addAuctionLinks() {
-        const $names = $(".ah2_itemname");
-        $(".ah2_row").each(function () {
-            $names.push(...$(this).children("td").eq(2)
-                .children("a[href*='auction_id=']").get());
-        });
-        $names.each(function () {
-            const $name = $(this);
-            const itemname = $name.text().trim();
-            const $existing = $name.next(".auction-search-helper");
-            if (!itemname) {
-                $existing.remove();
-            } else if ($existing.attr("data-item-name") !== itemname) {
-                $existing.remove();
-                const $links = makelinks(itemname).addClass("auction-search-helper");
-                isolateItemLinks($links);
-                $name.after($links);
-            }
-        });
-    }
-    const auctionWatchOptions = { childList: true, subtree: true, characterData: true };
-    const auctionObserver = new MutationObserver(function () {
-        auctionObserver.disconnect();
-        addAuctionLinks();
-        auctionObserver.observe(document.documentElement, auctionWatchOptions);
-    });
-    addAuctionLinks();
-    auctionObserver.observe(document.documentElement, auctionWatchOptions);
-}
 
 function isolateItemLinks($links) {
     $links.find("a").each(function () {
@@ -614,21 +583,6 @@ function isolateItemLinks($links) {
     });
 }
 
-// Keep search icons outside the links that claim donated items.
-if (inURL("/donations.phtml")) {
-    $(".moneytree-grid > .donated").each(function () {
-        const $card = $(this);
-        const $claim = $card.children("a[href*='takedonation_new.phtml']").first();
-        const itemname = ($claim.attr("data-name") || "").trim();
-        if (itemname && ($claim.attr("data-img") || "").includes("/items/") &&
-            !$card.children(".search-helper").length) {
-            appendItemLinks($card, itemname, {
-                cash: $claim.children(".item-img").hasClass("nc"),
-            });
-            $card.children(".search-helper").addClass("donation-search-helper");
-        }
-    });
-}
 
 function appendItemLinks($host, itemname, extras) {
     const $links = makelinks(itemname, extras);
@@ -636,22 +590,14 @@ function appendItemLinks($host, itemname, extras) {
     $host.append($links);
 }
 
-if (inURL("/thriftshoppe/index.phtml")) {
-    $("a[href^='javascript:take_donation(']").each(function () {
-        const $claim = $(this);
-        const $cell = $claim.closest("td");
-        const itemname = $claim.children("div").eq(1).text().trim();
-        if (itemname && !$cell.children(".search-helper").length) {
-            appendItemLinks($cell, itemname, { cash: false, wearable: true });
-            $cell.children(".search-helper").addClass("donation-search-helper");
-        }
-    });
-}
 
 if (isBeta) {
     /*
      Adds the search icons under things in:
+     Auction House and Genie
+     Money Tree Donations
      Main Shops
+     User Shop Fronts
      Inventory
      Kitchen Quest
      Snow Faerie Quests
@@ -665,10 +611,61 @@ if (isBeta) {
      Tea Time With Tavi
      Igloo Garage Sale
      General Store
-     Battledome Equipment
+     Quickstock
      Safety Deposit Box
      Closet
+     Battledome Equipment
+     Your Shop
+     Your Shop's Sales History
     */
+
+    // Modern auction listings, Genie results, and lot details share these item nodes.
+    if (inURL("/auctions.phtml") || inURL("/genie.phtml")) {
+        function addAuctionLinks() {
+            const $names = $(".ah2_itemname");
+            $(".ah2_row").each(function () {
+                $names.push(...$(this).children("td").eq(2)
+                    .children("a[href*='auction_id=']").get());
+            });
+            $names.each(function () {
+                const $name = $(this);
+                const itemname = $name.text().trim();
+                const $existing = $name.next(".auction-search-helper");
+                if (!itemname) {
+                    $existing.remove();
+                } else if ($existing.attr("data-item-name") !== itemname) {
+                    $existing.remove();
+                    const $links = makelinks(itemname).addClass("auction-search-helper");
+                    isolateItemLinks($links);
+                    $name.after($links);
+                }
+            });
+        }
+        const auctionWatchOptions = { childList: true, subtree: true, characterData: true };
+        const auctionObserver = new MutationObserver(function () {
+            auctionObserver.disconnect();
+            addAuctionLinks();
+            auctionObserver.observe(document.documentElement, auctionWatchOptions);
+        });
+        addAuctionLinks();
+        auctionObserver.observe(document.documentElement, auctionWatchOptions);
+    }
+
+    // Keep search icons outside the links that claim donated items.
+    if (inURL("/donations.phtml")) {
+        $(".moneytree-grid > .donated").each(function () {
+            const $card = $(this);
+            const $claim = $card.children("a[href*='takedonation_new.phtml']").first();
+            const itemname = ($claim.attr("data-name") || "").trim();
+            if (itemname && ($claim.attr("data-img") || "").includes("/items/") &&
+                !$card.children(".search-helper").length) {
+                appendItemLinks($card, itemname, {
+                    cash: $claim.children(".item-img").hasClass("nc"),
+                });
+                $card.children(".search-helper").addClass("donation-search-helper");
+            }
+        });
+    }
 
     // Common functions go here
     function hasSearchHelper(element) {
@@ -1181,10 +1178,24 @@ if (isBeta) {
      Employment Agency
      Kadoatery
      Hidden Tower
-     Your Shop's Sales History
-     Battledome
      Gallery Rankings
+     Thrift Shoppe
+     Ninja Weaponry purchase list
+     Almost Abandoned Attic
     */
+
+    // Thrift Shoppe
+    if (inURL("/thriftshoppe/index.phtml")) {
+        $("a[href^='javascript:take_donation(']").each(function () {
+            const $claim = $(this);
+            const $cell = $claim.closest("td");
+            const itemname = $claim.children("div").eq(1).text().trim();
+            if (itemname && !$cell.children(".search-helper").length) {
+                appendItemLinks($cell, itemname, { cash: false, wearable: true });
+                $cell.children(".search-helper").addClass("donation-search-helper");
+            }
+        });
+    }
 
     // Almost Abandoned Attic
     if (inURL("/halloween/garage.phtml")) {
