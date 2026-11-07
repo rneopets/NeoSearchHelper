@@ -2,7 +2,7 @@
 // @name         Neopets - Search Helper
 // @version      1.0.43
 // @namespace    neopets
-// @description  Adds convenient search icons to many places
+// @description  Adds convenient search icons to many places. On modern Neopets pages, choose and reorder icons via Search Helper in the profile dropdown.
 // @author       diceroll123
 // @match        *://*.neopets.com/auctions.phtml*
 // @match        *://*.neopets.com/browseshop.phtml*
@@ -46,6 +46,9 @@
 // @grant        none
 // ==/UserScript==
 
+// Settings: on modern Neopets pages, open the profile dropdown in the sidebar and click "Search Helper"
+// (between Settings and Sign Out) to choose which search icons show and in what order.
+
 const imgSize = 20; // for the search images
 
 const searchHelperPageURL = new URL(document.URL);
@@ -54,6 +57,25 @@ const isFaerieQuestPage = searchHelperPageURL.pathname === "/quests.phtml";
 $(`<style type='text/css'>
 .searchimg { cursor: pointer; height: ${imgSize}px !important; width: ${imgSize}px !important; border: none !important; border-radius: 0px !important; display: inline-block !important; }
 .search-helper { margin-top: 0; margin-bottom: 0; }
+#search-helper-popup { display: none; position: fixed !important; top: 50% !important; left: 50% !important; margin: 0 !important; transform: translate(-50%, -50%); z-index: 10001; max-width: calc(100vw - 24px); }
+#search-helper-popup.open { display: block !important; }
+#search-helper-popup { width: 440px; }
+#search-helper-popup .popup-body__2020 { padding: 14px 18px 10px !important; box-sizing: border-box; }
+#search-helper-popup * { box-sizing: border-box; }
+#search-helper-popup .sh-hint { margin: 0 0 8px; font-size: 12px; color: #666; text-align: center; }
+#search-helper-popup h4 { margin: 10px 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; text-align: left; color: #555; }
+#search-helper-popup .sh-dock { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; align-content: start; min-height: 76px; padding: 10px; margin-bottom: 6px; border: 2px dashed #c9c9c9; border-radius: 8px; background: #fafafa; transition: border-color .15s, background .15s; }
+#search-helper-popup .sh-dock:empty::before { content: attr(data-empty); grid-column: 1 / -1; align-self: center; text-align: center; font-size: 12px; color: #999; }
+#search-helper-popup .sh-dock.over { border-color: #78602c; background: #78602c18; }
+#search-helper-popup .sh-reset { display: block; margin: 6px auto 0; padding: 4px 12px; border: 1px solid #ccc; border-radius: 6px; background: #fff; color: #444; font-size: 12px; cursor: pointer; }
+#search-helper-popup .sh-reset:hover { background: #f0f0f0; }
+#search-helper-popup .sh-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; width: 100%; height: 62px; padding: 4px; border: 1px solid #ddd; border-radius: 8px; background: #fff; box-shadow: 0 1px 2px #0002; cursor: grab; font-size: 11px; line-height: 1.1; text-align: center; user-select: none; transition: transform .1s, box-shadow .1s; }
+#search-helper-popup .sh-tile:hover, #search-helper-popup .sh-tile:focus-visible { transform: translateY(-1px); box-shadow: 0 3px 6px #0003; outline: none; }
+#search-helper-popup .sh-tile img { width: 26px; height: 26px; pointer-events: none; }
+#search-helper-popup .sh-dock[data-dock='inactive'] .sh-tile { opacity: 0.55; filter: grayscale(1); }
+#search-helper-popup .sh-tile.dragging { opacity: 0.4; }
+#search-helper-backdrop { display: none; position: fixed; inset: 0; z-index: 10000; background: #0006; }
+#search-helper-backdrop.open { display: block; }
 .qs-search-helper a { display: inline-block !important; }
 #app .tp-search-helper { display: flex !important; flex-flow: row wrap; gap: 2px 3px; margin: 3px 0; }
 #app .tp-search-items { overflow-y: auto; }
@@ -88,44 +110,82 @@ const linkmap = {
     // for urls and images for each search type
     // if the image is not from images.neopets.com, base64 it
     ssw: {
+        name: "Super Shop Wizard",
         img: "https://images.neopets.com/premium/shopwizard/ssw-icon.svg",
     },
     sw: {
+        name: "Shop Wizard",
         url: "https://www.neopets.com/shops/wizard.phtml?string=%s",
         img: "https://images.neopets.com/themes/h5/basic/images/shopwizard-icon.png",
     },
     tp: {
+        name: "Trading Post",
         url: "https://www.neopets.com/island/tradingpost.phtml?type=browse&criteria=item_exact&search_string=%s",
         img: "https://images.neopets.com/themes/h5/basic/images/tradingpost-icon.png",
     },
     au: {
+        name: "Auctions",
         url: "https://www.neopets.com/genie.phtml?type=process_genie&criteria=exact&auctiongenie=%s",
         img: "https://images.neopets.com/themes/h5/basic/images/auction-icon.png",
     },
     sdb: {
+        name: "Safety Deposit Box",
         url: "https://www.neopets.com/safetydeposit.phtml?obj_name=%s&category=0",
         img: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAECklEQVRYhe1WS08jRxD+qj2PHQ8gbLB5SgaBQKDkyokDXPIbOOcX5RJFSi45RcovyCESIocoOawQSHhxQDwMEg/j4CEz4/FO90zlwIzXsMbrELTaw35SH2ZUVd/XVdVdDXzGZ3yKIKKPxwUAlmVNFAqFNcMwviwUChfZbPZ8b2/vLTP/PTg4eCuE8E9OTlgpxQDeAmgBYAB6EkcCiADESUzu4NASO5H8l8nitoCZmZmv19fXf3AcR0xNTcUDAwOy1WqBmZtE9I+U0t/Z2ckwc2wYhgOgngTIJiR+IirqEMAJ6SsANgADgALgE5F/c3PzZ7lc/lYTQmB6enpI3AOGYYhsNmtalgUAJoAcEWF2dhZhGMJ1Xei6DsMwwNy50f4QBAFM04RlWROVSuVHjYig67qdGjBze6WI4xhSSjSbTRQKBTSbTRSLRdi23ZWkG+I4xvX1NUzThFIKvu8PEVFWS0j1pxyFEDg6OsLW1haICBsbG1heXka5XEYURdD1J10fwPM85PN5LCwsYHt7G47jCACkJTsNezm7rotarYZMJgOlFEZHR5HP53F4eAjbtj9YCqUUTNPEysoKhBCpvQYgozEzWq2WSo9eFEXvBZBSPiBhZmQyGQwPD2NwcPCDAlJ/ImqXN5vNGpOTk5rGzFBKRUTUNngKhmHAMIwHQh73Szc8tmFmWJYlJicnNQ0AiOjJQjIz5ufnsbq6CiJCsVh8Vvd3gWDmjJZ85HsJyOVyKJVKcF0XQoiXIG8LSKMN9bLsTHUcx/+bOSl1JggCU+D+5tL6cSKirk36TBhRFL1KM9Azr8lJQRAEL0UOABkARkr85PgTQqBarWJzcxPlcrndgGlG/svqIkBPU99z/jqOg0ajAeDdPSGlhOd5iOO4r4tICIEoiqBp7WoLAFpfAjoDKaXQaDQwMTGBpaWlvt8OjUYDR0dHKJVKqQ8BoFRAz9bWNA1DQ0PI5XJoNBoYGRnB3Nxc33MAAEqlEqrVKvb39+G6bjsTGgAKw9BMd/L4mDEzSqUS1tbWwMw4PT2FlBKVSqVv8hREhHq9DsdxMD4+HgNQqQArbZRuAgYGBmBZFoiIdV2PPc9rF11KSVEUpd9xstLXkcL9oAuT7wwR2SMjI7bnebdhGNbTEnTtIiJCEAS4u7ur6rr+i+/7f4Rh6CYEDAC7u7u4uLgAEXHyX3WsEO9eSwr3T7McgGFmdqWU+10vICKCUgp3d3e1s7Ozn46Pj78/PT39y/O893qln2HUC10FuK7bvLy8/LVSqXxzfHz8++3trXw2Qz8CmJnDMIRSimu12ptarfbd69evfz4/P6+/xN3fCwSAbNv+amxs7IvFxcXg4ODgt6urqze+77/IzO0byYv4o3J+EvgX4yIhYBP/dWUAAAAASUVORK5CYII=",
     },
     closet: {
+        name: "Closet",
         url: "https://www.neopets.com/closet.phtml?obj_name=%s",
         img: "https://images.neopets.com/items/ffu_illusen_armoire.gif",
     },
     jni: {
+        name: "Jellyneo Item Database",
         url: "https://items.jellyneo.net/search/?name=%s&name_type=3",
         img: "data:image/png;base64,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",
     },
     battlepedia: {
+        name: "Battlepedia",
         url: "https://battlepedia.jellyneo.net/index.php?search=%s",
         img: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAChklEQVQ4T5XRW0iTARQH8P83Vi7n2CUvm0hroW7aFK1t+nkBe1BYK7KHoCYZXpplPUTkQ0WQQg9FIURiZHRDs8wEK6QNibFhZagT3drmFadJlq3mnM55+cIvIqKmdZ4Pv/M/5xAhigO5LOaGWI975hkGXnzAfxbBSy84oi3Q3vP7/Qv91n6Tw+547PXOtMPeNvYvFoFYdUTJsaPDMTExHKlUitnZWej1+hm705n0/sll13oIsdqgKLyoL9Pp8qanp8FgMCAQCNDU1GQnNi4qDVcrfGshNMAnC05UVlXdYLFYcDqdEIlE8Hg8MJvN9cbaisPrApDtji8pLXWQJElQFAWXywU2m43x8XEMj46Uvbx28lYwhE5AV4I6XbNnb4P2kHab2+3G5OQknSIQCMzdrqlOwYhpcLUtTY7k8DBGoW9h5ZHRgq5fAIDoHF345kh+XVZWdr5EIoHNZgOXy4XF0tNn7m5WkP5uTrGasHFCIbz5HK1GC5X/G/AzzJa84zqpTFotl8tDV9OIxWI0NjY2cB0116+UL3XWGxAYmqBkpj6M/hWgofgcWUSUuE6pUmUxmUzExcWht+V8a1Hq2319I0CHldJ09KMtOPAjDhGmPFiVmJhQIRQKQySCuTenxKfJM7VwTXyhVJ1WTK0J5KSA551H6s4d0Q/ZYtKrkQ5EGgxWbs8gcbe9a6WYnhDsPRkJECu3E3VFauQ6xoCtIqDFBETwgKVl4NNXuLqGKEVQQJOOc8Ua4tI7OxY/ukF99sDhm6OeZsiJyig+kJkEXLhDnQ0K7EpGGmsTUe3zU/f9C2gOZWHZ2ItvJRqic382VK+t9CF16x3xjw0zpeDw+CifD2DqVQ8efAfoI/lhtfaY7AAAAABJRU5ErkJggg==",
     },
     dti: {
+        name: "Dress to Impress",
         img: "data:image/gif;base64,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",
     },
     idb: {
+        name: "ItemDB",
         url: "https://itemdb.com.br/item/%s",
         img: "https://images.neopets.com/themes/h5/basic/images/v3/quickstock-icon.svg",
     },
 };
+
+const searchLayoutStorageKey = "search-helper-layout";
+// active icons are shown in this order; inactive icons are hidden
+let searchLayout = { active: [], inactive: [] };
+
+function normalizeSearchLayout(saved) {
+    const known = Object.keys(linkmap);
+    const seen = new Set();
+    const keep = (list) => (Array.isArray(list) ? list : []).filter((key) => {
+        if (!known.includes(key) || seen.has(key)) {
+            return false;
+        }
+        seen.add(key);
+        return true;
+    });
+    const active = keep(saved?.active);
+    const inactive = keep(saved?.inactive);
+    // icons missing from the saved layout (e.g. added in an update) start out active
+    known.filter((key) => !seen.has(key)).forEach((key) => active.push(key));
+    return { active, inactive };
+}
+
+try {
+    searchLayout = normalizeSearchLayout(JSON.parse(localStorage.getItem(searchLayoutStorageKey)));
+} catch (_) {
+    /* Storage may be unavailable or corrupt; fall back to the default layout. */
+    searchLayout = normalizeSearchLayout(null);
+}
 
 // user has premium toolbar
 let premium = false;
@@ -140,13 +200,15 @@ function escapeSearchAttribute(value) {
         .replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 
-function combiner(item, url, image) {
+function combiner(item, url, image, type) {
     url = url.replace("%s", () => item);
-    return `<a tabindex='-1' target='_blank' href='${escapeSearchAttribute(url)}'><img src='${image}' class='searchimg'></a>`;
+    type = type || Object.keys(linkmap).find((key) => linkmap[key].img === image);
+    const label = linkmap[type]?.name || "Search item";
+    return `<a tabindex='-1' target='_blank' data-search-type='${type}' title='${label}' href='${escapeSearchAttribute(url)}'><img src='${image}' class='searchimg'></a>`;
 }
 
 function sswlink(item) {
-    return `<a tabindex='-1' href='#' class='ssw-helper' data-item='${escapeSearchAttribute(item)}'><img src='${linkmap.ssw.img}' class='searchimg'></a>`;
+    return `<a tabindex='-1' href='#' class='ssw-helper' data-search-type='ssw' title='${linkmap.ssw.name}' data-item='${escapeSearchAttribute(item)}'><img src='${linkmap.ssw.img}' class='searchimg'></a>`;
 }
 
 function sswlimited(item) {
@@ -197,7 +259,7 @@ function slugfy(itemName) {
 // overall linker thing
 function makelinks(item, extras) {
     // extras is an object that can only have boolean of 'cash' and 'wearable' (for now) | and a string/int number 'itemid' (only needed for wearable being true)
-    let links = "";
+    const links = {}; // html by search type, joined in the user's order below
 
     item = $.trim(item);
     if (typeof extras === "undefined") {
@@ -216,28 +278,28 @@ function makelinks(item, extras) {
             // doesn't show either SW if you're on a quest
             // SSW
             if (premium) {
-                links += sswurl;
+                links.ssw = sswurl;
             }
 
             // Regular SW
-            links += combiner(name, linkmap.sw.url, linkmap.sw.img);
+            links.sw = combiner(name, linkmap.sw.url, linkmap.sw.img);
         }
 
         // TP
-        links += combiner(name, linkmap.tp.url, linkmap.tp.img);
+        links.tp = combiner(name, linkmap.tp.url, linkmap.tp.img);
 
         // Auctions
-        links += combiner(name, linkmap.au.url, linkmap.au.img);
+        links.au = combiner(name, linkmap.au.url, linkmap.au.img);
     }
 
     // SDB
     if (inURL("safetydeposit") === false) {
-        links += combiner(name, linkmap.sdb.url, linkmap.sdb.img);
+        links.sdb = combiner(name, linkmap.sdb.url, linkmap.sdb.img);
     }
 
     // Closet
     if (extras.wearable && inURL("closet.phtml") === false) {
-        links += combiner(name, linkmap.closet.url, linkmap.closet.img);
+        links.closet = combiner(name, linkmap.closet.url, linkmap.closet.img);
     }
 
     // DTI
@@ -246,18 +308,18 @@ function makelinks(item, extras) {
         if (extras.itemid !== -1 && typeof extras.itemid != "undefined") {
             link = `https://impress.openneo.net/items/${extras.itemid}`;
         }
-        links += combiner(name, link, linkmap.dti.img);
+        links.dti = combiner(name, link, linkmap.dti.img);
     }
 
     // JN items
-    links += combiner(name, linkmap.jni.url, linkmap.jni.img);
+    links.jni = combiner(name, linkmap.jni.url, linkmap.jni.img);
 
     // itemdb.com.br
-    links += combiner(slugfy(item), linkmap.idb.url, linkmap.idb.img);
+    links.idb = combiner(slugfy(item), linkmap.idb.url, linkmap.idb.img);
 
     // Battlepedia
     if (inURL("dome") || extras.cash === false) {
-        links += combiner(
+        links.battlepedia = combiner(
             name,
             linkmap.battlepedia.url,
             linkmap.battlepedia.img,
@@ -267,10 +329,183 @@ function makelinks(item, extras) {
     // Changed quests to use div, because p makes the text spill out of RE box
     const element =
         isFaerieQuestPage || inURL("quickstock.phtml") ? "div" : "p";
-    const helper = $(`<${element} class='search-helper'>${links}</${element}>`)
+    const helper = $(`<${element} class='search-helper'>${searchLayoutOrder().map((key) => links[key] || "").join("")}</${element}>`)
         .attr("data-item-name", item);
 
     return helper;
+}
+
+function searchLayoutOrder() {
+    return [...searchLayout.active, ...searchLayout.inactive];
+}
+
+function applySearchLayout() {
+    let style = document.getElementById("search-helper-icon-visibility");
+    if (!style) {
+        style = document.createElement("style");
+        style.id = "search-helper-icon-visibility";
+        document.head.append(style);
+    }
+    style.textContent = searchLayout.inactive
+        .map((key) => `.search-helper > a[data-search-type='${key}'] { display: none !important; }`)
+        .join("\n");
+
+    // re-sort helpers that were built before the layout changed
+    const order = searchLayoutOrder();
+    $(".search-helper").each(function () {
+        const helper = $(this);
+        order.forEach((key) => {
+            helper.children(`a[data-search-type='${key}']`).appendTo(helper);
+        });
+    });
+}
+
+function saveSearchLayout() {
+    try { localStorage.setItem(searchLayoutStorageKey, JSON.stringify(searchLayout)); }
+    catch (_) { /* Changes still apply for this page when storage is blocked. */ }
+}
+
+applySearchLayout();
+
+function addSearchSettingsMenu() {
+    const settingsSection = $("#profileSettings");
+    if (!settingsSection.exists() || $("#search-helper-menu").exists()) {
+        return;
+    }
+
+    const backdrop = $("<div id='search-helper-backdrop'></div>");
+    const popup = $(`<div class='togglePopup__2020 movePopup__2020' id='search-helper-popup'>
+        <div class='popup-header__2020'>
+            <button type='button' class='popup-exit button-default__2020 button-red__2020'><div class='popup-exit-icon'></div></button>
+            <h3>Search Helper Icons</h3>
+            <div class='popup-header-pattern__2020'></div>
+        </div>
+        <div class='popup-body__2020'>
+            <p class='sh-hint'>Drag to reorder or move between docks. Click an icon to move it.</p>
+            <h4>Active</h4>
+            <div class='sh-dock' data-dock='active' data-empty='🤨 Drop icons here to show them'></div>
+            <h4>Inactive</h4>
+            <div class='sh-dock' data-dock='inactive' data-empty='Drop icons here to hide them'></div>
+            <button type='button' class='sh-reset'>Reset to default</button>
+        </div>
+        <div class='popup-footer__2020 popup-grid3__2020'>
+            <div></div>
+            <button type='button' class='button-default__2020 button-red__2020'>Close</button>
+            <div class='popup-footer-pattern__2020'></div>
+        </div>
+    </div>`);
+    const docks = popup.find(".sh-dock");
+
+    const tileFor = (key) => $("<div class='sh-tile' draggable='true' tabindex='0' role='button'></div>")
+        .attr({ "data-key": key, title: linkmap[key].name })
+        .append($("<img>").attr("src", linkmap[key].img), $("<span></span>").text(linkmap[key].name));
+
+    const render = () => {
+        docks.each(function () {
+            const dock = $(this);
+            dock.empty().append(searchLayout[dock.data("dock")].map(tileFor));
+        });
+    };
+
+    // the DOM is the source of truth once the user rearranges something
+    const commit = () => {
+        docks.each(function () {
+            const dock = $(this);
+            searchLayout[dock.data("dock")] = dock.children(".sh-tile").map(function () {
+                return $(this).attr("data-key");
+            }).get();
+        });
+        saveSearchLayout();
+        applySearchLayout();
+    };
+
+    let dragging = null;
+    popup.on("dragstart", ".sh-tile", function (event) {
+        dragging = this;
+        event.originalEvent.dataTransfer.effectAllowed = "move";
+        event.originalEvent.dataTransfer.setData("text/plain", $(this).attr("data-key"));
+        $(this).addClass("dragging");
+    });
+    popup.on("dragend", ".sh-tile", function () {
+        $(this).removeClass("dragging");
+        docks.removeClass("over");
+        dragging = null;
+    });
+    docks.on("dragover", function (event) {
+        if (!dragging) {
+            return;
+        }
+        event.preventDefault();
+        $(this).addClass("over");
+        const { clientX, clientY } = event.originalEvent;
+        const before = $(this).children(".sh-tile").not(dragging).toArray().find((tile) => {
+            const rect = tile.getBoundingClientRect();
+            return clientY < rect.bottom && clientX < rect.left + rect.width / 2;
+        });
+        if (before) {
+            $(dragging).insertBefore(before);
+        } else {
+            $(dragging).appendTo(this);
+        }
+    });
+    docks.on("dragleave", function (event) {
+        if (!this.contains(event.originalEvent.relatedTarget)) {
+            $(this).removeClass("over");
+        }
+    });
+    docks.on("drop", function (event) {
+        event.preventDefault();
+        $(this).removeClass("over");
+        commit();
+    });
+
+    // click / keyboard fallback: move to the other dock
+    popup.on("click keydown", ".sh-tile", function (event) {
+        if (event.type === "keydown" && event.key !== "Enter" && event.key !== " ") {
+            return;
+        }
+        event.preventDefault();
+        const target = $(this).parent().attr("data-dock") === "active" ? "inactive" : "active";
+        $(this).appendTo(docks.filter(`[data-dock='${target}']`));
+        commit();
+    });
+
+    popup.find(".sh-reset").on("click", () => {
+        searchLayout = normalizeSearchLayout(null);
+        saveSearchLayout();
+        applySearchLayout();
+        render();
+    });
+
+    render();
+
+    const setOpen = (open) => {
+        popup.toggleClass("open", open);
+        backdrop.toggleClass("open", open);
+    };
+    popup.find(".popup-exit, .popup-footer__2020 button").on("click", () => setOpen(false));
+    backdrop.on("click", () => setOpen(false));
+    $(document).on("keydown", (event) => {
+        if (event.key === "Escape") {
+            setOpen(false);
+        }
+    });
+    $("body").append(backdrop, popup);
+
+    const menuItem = $(`<a href='#' id='search-helper-menu'><li class='profile-linkflex'>
+        <div class='profile-dropdown-link-icon' style="background-image: url('${linkmap.ssw.img}'); background-size: contain; background-repeat: no-repeat;"></div>
+        <h3>Search Helper</h3>
+    </li></a>`);
+    menuItem.on("click", (event) => {
+        event.preventDefault();
+        setOpen(true);
+    });
+    settingsSection.after(menuItem);
+}
+
+if (isBeta) {
+    addSearchSettingsMenu();
+    $(addSearchSettingsMenu);
 }
 
 jQuery.fn.justtext = function () {
