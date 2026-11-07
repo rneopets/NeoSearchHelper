@@ -310,8 +310,7 @@ if (inURL("/island/tradingpost.phtml")) {
                 const $links = makelinks(itemname, {
                     cash: false,
                     wearable: /\(wearable\)/i.test($name.siblings(".tp-grid-item-subname").text()),
-                }).addClass("tp-search-helper")
-                    .attr("data-item-name", itemname);
+                }).addClass("tp-search-helper");
                 isolateItemLinks($links);
                 $name.after($links);
                 $name.closest(".bg-white").addClass("tp-search-items");
@@ -361,7 +360,7 @@ if (inURL("/donations.phtml")) {
 }
 
 function appendItemLinks($host, itemname, extras) {
-    const $links = makelinks(itemname, extras).attr("data-item-name", itemname);
+    const $links = makelinks(itemname, extras);
     isolateItemLinks($links);
     $host.append($links);
 }
@@ -419,9 +418,7 @@ if (isBeta) {
                 return;
             }
             $existing.remove();
-            $(element).after(
-                makelinks(name).attr("data-item-name", name),
-            );
+            $(element).after(makelinks(name));
         }
 
         // due to inconsistencies in the page, we will attempt to do two different kinds of search helper adds
