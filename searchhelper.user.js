@@ -256,7 +256,7 @@ function makelinks(item, extras) {
     links += combiner(slugfy(item), linkmap.idb.url, linkmap.idb.img);
 
     // Battlepedia
-    if (inURL("dome")) {
+    if (inURL("dome") || extras.cash === false) {
         links += combiner(
             name,
             linkmap.battlepedia.url,
