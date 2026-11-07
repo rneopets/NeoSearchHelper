@@ -512,14 +512,15 @@ if (isBeta) {
     // Inventory
     if (inURL("inventory")) {
         // the inventory system is more flexible than it used to be, so we have to do this a little differently
-        $(document).ajaxSuccess(function () {
+        function addInventoryLinks() {
             $(".item-img + .item-name").each(function (index, element) {
                 // this will add more and more if you do things like SSW searching, so check first
-                if (!hasSearchHelper(element)) {
+                if ($(element).next(".search-helper").attr("data-item-name") !== $(element).text().trim()) {
+                    $(element).next(".search-helper").remove();
                     let extras = {
                         cash:
-                            document.getElementById("invDisplay").dataset
-                                .type === "nc",
+                            (($(element).siblings(".item-img").attr("data-itemset") ||
+                                document.getElementById("invDisplay")?.dataset.type) === "nc"),
                         wearable:
                             $(element).parent().find(":contains('wearable')")
                                 .length > 0,
@@ -531,6 +532,15 @@ if (isBeta) {
                     $(element).after(makelinks($(element).text(), extras));
                 }
             });
+        }
+        addInventoryLinks();
+        $(document).ajaxSuccess(addInventoryLinks);
+        let inventoryT = 0;
+        new MutationObserver(function () {
+            clearTimeout(inventoryT);
+            inventoryT = setTimeout(addInventoryLinks, 50);
+        }).observe(document.getElementById("invDisplay") || document.body, {
+            childList: true, subtree: true, characterData: true,
         });
     }
 
