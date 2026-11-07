@@ -41,7 +41,7 @@
 // @match        *://*.neopets.com/winter/igloo.phtml*
 // @match        *://*.neopets.com/winter/snowfaerie*.phtml*
 // @match        *://*.neopets.com/questlog/*
-// @match        *://*.neopets.com/games/teatime/
+// @match        *://*.neopets.com/games/teatime/*
 // @icon         https://www.neopets.com/favicon.ico
 // @grant        none
 // ==/UserScript==
@@ -637,16 +637,25 @@ if (isBeta) {
         function TaviQuest() {
             $(".ttwt-item > img[src*='/items/'] + span").each(
                 function (index, element) {
-                    if (!hasSearchHelper(element)) {
-                        $(element).after(makelinks($(element).text()));
+                    const itemname = $(element).text().trim();
+                    const $existing = $(element).siblings(".search-helper");
+                    if (itemname && $existing.attr("data-item-name") !== itemname) {
+                        $existing.remove();
+                        const $links = makelinks(itemname);
+                        isolateItemLinks($links);
+                        $(element).after($links);
                     }
                 },
             );
         }
-        TaviQuest();
-        $(document).ajaxSuccess(function () {
-            setTimeout(TaviQuest, 1000);
+        const taviOptions = { childList: true, subtree: true, characterData: true };
+        const taviObserver = new MutationObserver(function (mutations, observer) {
+            observer.disconnect();
+            TaviQuest();
+            observer.observe(document.documentElement, taviOptions);
         });
+        TaviQuest();
+        taviObserver.observe(document.documentElement, taviOptions);
     }
 
     // Igloo Garage Sale
