@@ -660,6 +660,8 @@ function isolateItemLinks($links) {
                 e.stopPropagation();
                 if (isSsw && type === "click") {
                     e.preventDefault();
+                    // sswopen is hoisted out of its if/else branch (see below)
+                    // eslint-disable-next-line no-undef
                     sswopen(el.getAttribute("data-item"));
                 }
             });
@@ -1333,6 +1335,10 @@ if (isBeta) {
         });
     }
 
+    // Hoisted out of this if/else branch to the enclosing scope at runtime
+    // (sloppy-mode function hoisting), so it's reachable from the other branch
+    // and from the click handler below.
+    // eslint-disable-next-line no-unused-vars
     function sswopen(item) {
         $(".premium-widget__2024").hide(); // hide all open widgets
         toggleWidget__2020("ssw");
@@ -1500,6 +1506,10 @@ if (isBeta) {
             });
     }
 
+    // Hoisted out of this if/else branch to the enclosing scope at runtime
+    // (sloppy-mode function hoisting), so it's reachable from the other branch
+    // and from the click handler below.
+    // eslint-disable-next-line no-unused-vars
     function sswopen(item) {
         if ($(".sswdrop").hasClass("panel_hidden")) {
             $("#sswmenu .imgmenu").click();
@@ -1520,5 +1530,7 @@ if (isBeta) {
 
 $("body").on("click", "a.ssw-helper", function (event) {
     event.preventDefault();
+    // sswopen is hoisted out of its if/else branch (see above)
+    // eslint-disable-next-line no-undef
     sswopen($(this).attr("data-item"));
 });
