@@ -263,7 +263,8 @@ function makelinks(item, extras) {
     // Changed quests to use div, because p makes the text spill out of RE box
     const element =
         isFaerieQuestPage || inURL("quickstock.phtml") ? "div" : "p";
-    const helper = $(`<${element} class='search-helper'>${links}</${element}>`);
+    const helper = $(`<${element} class='search-helper'>${links}</${element}>`)
+        .attr("data-item-name", item);
 
     return helper;
 }
