@@ -5,6 +5,7 @@
 // @description  Adds convenient search icons to many places
 // @author       diceroll123
 // @match        *://*.neopets.com/auctions.phtml*
+// @match        *://*.neopets.com/browseshop.phtml*
 // @match        *://*.neopets.com/closet.phtml*
 // @match        *://*.neopets.com/dome/neopets.phtml*
 // @match        *://*.neopets.com/donations.phtml*
@@ -59,6 +60,8 @@ $(`<style type='text/css'>
 .donation-search-helper a { display: inline-block !important; width: auto; margin: 0; padding: 0; }
 .sdb-item-info > .search-helper a, .sdb-grid-item-content > .search-helper a, .closet-list-item > div > .search-helper a, .closet-grid-item-content > .search-helper a { display: inline-block !important; }
 .fq-item > .search-helper { white-space: nowrap; }
+.bsp-item > .search-helper { display: flex !important; flex-flow: row wrap; justify-content: center; gap: 2px 3px; margin: 4px 0 0; padding: 0; }
+.bsp-item > .search-helper a { display: inline-block !important; }
 .sdb-table .sdb-item-cell, .sdb-grid .sdb-grid-item, .closet-list-row .closet-list-item, .closet-grid .closet-grid-item { pointer-events: none; }
 .sdb-table .sdb-item-cell > *, .sdb-grid .sdb-grid-item > *, .closet-list-row .closet-list-item > *, .closet-grid .closet-grid-item > * { pointer-events: auto; }
 </style>`).appendTo("head");
@@ -350,7 +353,7 @@ if (inURL("/donations.phtml")) {
 }
 
 function appendItemLinks($host, itemname, extras) {
-    const $links = makelinks(itemname, extras);
+    const $links = makelinks(itemname, extras).attr("data-item-name", itemname);
     isolateItemLinks($links);
     $host.append($links);
 }
@@ -426,6 +429,34 @@ if (isBeta) {
         $(".item-img + .item-name").each(function (index, element) {
             $(element).after(makelinks($(element).text()));
         });
+    }
+
+    // User Shop Fronts
+    if (inURL("browseshop.phtml")) {
+        // The Shop Wizard's featured item sits outside the regular grid region.
+        const shopRegion = document.querySelector(".bsp-page");
+        if (shopRegion) {
+            function addUserShopLinks() {
+                $(shopRegion).find(".bsp-grid > .bsp-item").each(function () {
+                    const $item = $(this);
+                    const itemname = $item
+                        .find(".bsp-item__buy .bsp-item__name")
+                        .first().text().trim();
+                    if (itemname && $item.children(".search-helper").attr("data-item-name") !== itemname) {
+                        $item.children(".search-helper").remove();
+                        // Keep search links outside the purchase button.
+                        appendItemLinks($item, itemname);
+                    }
+                });
+            }
+
+            let userShopT = 0;
+            new MutationObserver(function () {
+                clearTimeout(userShopT);
+                userShopT = setTimeout(addUserShopLinks, 50);
+            }).observe(shopRegion, { childList: true, subtree: true, characterData: true });
+            addUserShopLinks();
+        }
     }
 
     // Inventory
