@@ -78,6 +78,9 @@ jQuery.fn.exists = function () {
 // if the active pet dropdown image is there, we're in beta
 const isBeta = $("[class^='nav-pet-menu-icon']").exists();
 
+// obj_type ids of the main shops that stock wearables
+const WEARABLE_SHOP_IDS = ["4", "108"];
+
 // SDB grid categories whose items can be worn (grid cards carry no wearable flag)
 const WEARABLE_CATEGORIES = ["Clothes", "Neocash"];
 
@@ -476,8 +479,12 @@ if (isBeta) {
 
     // Main Shops
     if (inURL("objects.phtml") || inURL("type=shop")) {
+        const shopId = new URL(document.URL).searchParams.get("obj_type");
         $(".item-img + .item-name").each(function (index, element) {
-            $(element).after(makelinks($(element).text()));
+            $(element).after(makelinks($(element).text(), {
+                cash: false,
+                wearable: WEARABLE_SHOP_IDS.includes(shopId),
+            }));
         });
     }
 
