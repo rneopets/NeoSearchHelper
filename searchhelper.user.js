@@ -5,12 +5,14 @@
 // @description  Adds convenient search icons to many places
 // @author       diceroll123
 // @match        *://*.neopets.com/auctions.phtml*
+// @match        *://*.neopets.com/browseshop.phtml*
 // @match        *://*.neopets.com/closet.phtml*
 // @match        *://*.neopets.com/dome/neopets.phtml*
+// @match        *://*.neopets.com/donations.phtml*
 // @match        *://*.neopets.com/faerieland/darkfaerie.phtml*
 // @match        *://*.neopets.com/faerieland/employ/employment.phtml*
 // @match        *://*.neopets.com/faerieland/hiddentower938.phtml*
-// @match        *://*.neopets.com/gallery/index.phtml?*
+// @match        *://*.neopets.com/gallery/*
 // @match        *://*.neopets.com/games/kadoatery/*
 // @match        *://*.neopets.com/generalstore.phtml*
 // @match        *://*.neopets.com/genie.phtml*
@@ -20,6 +22,7 @@
 // @match        *://*.neopets.com/hospital.phtml*
 // @match        *://*.neopets.com/inventory.phtml*
 // @match        *://*.neopets.com/island/*training.phtml?*type=status*
+// @match        *://*.neopets.com/island/fight_training.phtml?*type=purchase*
 // @match        *://*.neopets.com/island/kitchen*.phtml*
 // @match        *://*.neopets.com/island/tradingpost.phtml*
 // @match        *://*.neopets.com/market.phtml*
@@ -51,11 +54,17 @@ $(`<style type='text/css'>
 .searchimg { cursor: pointer; height: ${imgSize}px !important; width: ${imgSize}px !important; border: none !important; border-radius: 0px !important; display: inline-block !important; }
 .search-helper { margin-top: 0; margin-bottom: 0; }
 .qs-search-helper a { display: inline-block !important; }
+#app .tp-search-helper { display: flex !important; flex-flow: row wrap; gap: 2px 3px; margin: 3px 0; }
+#app .tp-search-items { overflow-y: auto; }
 .sdb-item-info > .search-helper, .sdb-grid-item-content > .search-helper, .closet-list-item > div > .search-helper, .closet-grid-item-content > .search-helper { display: flex !important; flex-flow: row wrap; gap: 2px 3px; align-items: center; margin: 0; padding: 0; }
+.donation-search-helper { display: flex !important; flex-flow: row wrap; justify-content: center; gap: 2px 3px; margin: 4px 0; padding: 0; }
+.donation-search-helper a { display: inline-block !important; width: auto; margin: 0; padding: 0; }
 .sdb-item-info > .search-helper a, .sdb-grid-item-content > .search-helper a, .closet-list-item > div > .search-helper a, .closet-grid-item-content > .search-helper a { display: inline-block !important; }
 #items > li.attic-search-item { height: auto; min-height: 230px; }
 #items > li.attic-search-item > .search-helper { display: flex !important; flex-flow: row wrap; justify-content: center; gap: 2px 3px; }
 .fq-item > .search-helper { white-space: nowrap; }
+.bsp-item > .search-helper { display: flex !important; flex-flow: row wrap; justify-content: center; gap: 2px 3px; margin: 4px 0 0; padding: 0; }
+.bsp-item > .search-helper a { display: inline-block !important; }
 .sdb-table .sdb-item-cell, .sdb-grid .sdb-grid-item, .closet-list-row .closet-list-item, .closet-grid .closet-grid-item { pointer-events: none; }
 .sdb-table .sdb-item-cell > *, .sdb-grid .sdb-grid-item > *, .closet-list-row .closet-list-item > *, .closet-grid .closet-grid-item > * { pointer-events: auto; }
 </style>`).appendTo("head");
@@ -259,12 +268,60 @@ jQuery.fn.justtext = function () {
     return $(this).clone().children().remove().end().text();
 };
 
+if (inURL("/gallery/")) {
+    $("img.itemimg[src*='/items/']").each(function () {
+        const $name = $(this).siblings("b.textcolor").first();
+        if ($name.length && !$name.next(".search-helper").length) {
+            const $links = makelinks($name.text());
+            isolateItemLinks($links);
+            $name.after($links);
+        }
+    });
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // I don't really approve of doing the code this way, but in an effort to save as few headaches as possible
 // for the countless people who may use this, it's easier to just put beta & non-beta into one file.
 // As pages are converted, they will be removed from the non-beta half of the following if-statement, as TNT
 // mentioned in their end-of-flash update that beta pages will be the default when those pages are done.
 // That said, the point of no return starts here. May Sloth have mercy on us.
+// The Trading Post renders cards and detail overlays after the initial page load.
+if (inURL("/island/tradingpost.phtml")) {
+    function addTradingPostLinks() {
+        const tradingPostRoot = document.getElementById("app");
+        if (!tradingPostRoot) return;
+        const $names = $(tradingPostRoot).find(".item-name-text, .tp-grid-item-name");
+        $(tradingPostRoot).find("img[src*='/items/']").each(function () {
+            $names.push(...$(this).parent().siblings("p").get());
+        });
+        $names.each(function () {
+            const $name = $(this);
+            const itemname = $name.text().trim();
+            const $existing = $name.next(".tp-search-helper");
+            if (!itemname) {
+                $existing.remove();
+            } else if ($existing.attr("data-item-name") !== itemname) {
+                $existing.remove();
+                const $links = makelinks(itemname, {
+                    cash: false,
+                    wearable: /\(wearable\)/i.test($name.siblings(".tp-grid-item-subname").text()),
+                }).addClass("tp-search-helper")
+                    .attr("data-item-name", itemname);
+                isolateItemLinks($links);
+                $name.after($links);
+                $name.closest(".bg-white").addClass("tp-search-items");
+            }
+        });
+    }
+    const watchOptions = { childList: true, subtree: true, characterData: true };
+    const tradingPostObserver = new MutationObserver(function () {
+        tradingPostObserver.disconnect();
+        addTradingPostLinks();
+        tradingPostObserver.observe(document.documentElement, watchOptions);
+    });
+    addTradingPostLinks();
+    tradingPostObserver.observe(document.documentElement, watchOptions);
+}
 
 function isolateItemLinks($links) {
     $links.find("a").each(function () {
@@ -282,8 +339,24 @@ function isolateItemLinks($links) {
     });
 }
 
+// Keep search icons outside the links that claim donated items.
+if (inURL("/donations.phtml")) {
+    $(".moneytree-grid > .donated").each(function () {
+        const $card = $(this);
+        const $claim = $card.children("a[href*='takedonation_new.phtml']").first();
+        const itemname = ($claim.attr("data-name") || "").trim();
+        if (itemname && ($claim.attr("data-img") || "").includes("/items/") &&
+            !$card.children(".search-helper").length) {
+            appendItemLinks($card, itemname, {
+                cash: $claim.children(".item-img").hasClass("nc"),
+            });
+            $card.children(".search-helper").addClass("donation-search-helper");
+        }
+    });
+}
+
 function appendItemLinks($host, itemname, extras) {
-    const $links = makelinks(itemname, extras);
+    const $links = makelinks(itemname, extras).attr("data-item-name", itemname);
     isolateItemLinks($links);
     $host.append($links);
 }
@@ -359,6 +432,34 @@ if (isBeta) {
         $(".item-img + .item-name").each(function (index, element) {
             $(element).after(makelinks($(element).text()));
         });
+    }
+
+    // User Shop Fronts
+    if (inURL("browseshop.phtml")) {
+        // The Shop Wizard's featured item sits outside the regular grid region.
+        const shopRegion = document.querySelector(".bsp-page");
+        if (shopRegion) {
+            function addUserShopLinks() {
+                $(shopRegion).find(".bsp-grid > .bsp-item").each(function () {
+                    const $item = $(this);
+                    const itemname = $item
+                        .find(".bsp-item__buy .bsp-item__name")
+                        .first().text().trim();
+                    if (itemname && $item.children(".search-helper").attr("data-item-name") !== itemname) {
+                        $item.children(".search-helper").remove();
+                        // Keep search links outside the purchase button.
+                        appendItemLinks($item, itemname);
+                    }
+                });
+            }
+
+            let userShopT = 0;
+            new MutationObserver(function () {
+                clearTimeout(userShopT);
+                userShopT = setTimeout(addUserShopLinks, 50);
+            }).observe(shopRegion, { childList: true, subtree: true, characterData: true });
+            addUserShopLinks();
+        }
     }
 
     // Inventory
@@ -453,12 +554,16 @@ if (isBeta) {
     }
 
     // Illusen & Jhudora
-    if ($(".faerie-img").exists()) {
-        let itemname = $(":contains('Where is my') > b").text();
-        $(":contains('Where is my')")
-            .parent()
-            .find("img[src*='/items/']")
-            .after(makelinks(itemname));
+    const $faerieImg = $(".faerie-img");
+    if ($faerieImg.exists()) {
+        const $question = $faerieImg.nextAll("p:contains('Where is my')").first();
+        const itemname = $question.children("b").first().text().trim();
+        const $image = $question.nextAll("img[src*='/items/']").first();
+        if (itemname && $image.length) {
+            const $links = makelinks(itemname);
+            isolateItemLinks($links);
+            $image.after($links);
+        }
     }
 
     // Shop Wiz Auto-Exact
@@ -786,7 +891,6 @@ if (isBeta) {
 } else {
     /*
      Adds the search icons under things in:
-     Trading Post
      Redeeming Cash
      Auction Bidding Page
      Your Shop Price Page
@@ -811,15 +915,6 @@ if (isBeta) {
                 $item.addClass("attic-search-item");
                 appendItemLinks($item, itemname);
             }
-        });
-    }
-
-    // Trading Post
-    if (inURL("/island/tradingpost.phtml")) {
-        $("img[src*='/items/']").each(function (k, v) {
-            $(this.nextSibling).after(
-                makelinks($(this)[0].nextSibling.nodeValue),
-            );
         });
     }
 
@@ -874,6 +969,18 @@ if (isBeta) {
         });
     }
 
+    // Ninja Weaponry purchase list
+    if (inURL("/island/fight_training.phtml") &&
+        new URL(document.URL).searchParams.get("type") === "purchase") {
+        $("a[href*='process_fight_training.phtml'][href*='type=buy']").each(function () {
+            const $cell = $(this).closest("td");
+            const itemname = $cell.children("b").first().text().trim();
+            if (itemname && !$cell.children(".search-helper").length) {
+                appendItemLinks($cell, itemname);
+            }
+        });
+    }
+
     // KI Training
     if (searchHelperPageURL.pathname === "/pirates/academy.phtml" && searchHelperPageURL.searchParams.get("type") === "status") {
         $("img[src*='/items/']").each(function (k, v) {
@@ -913,18 +1020,6 @@ if (isBeta) {
                 itemname.after(makelinks(itemname.text()));
             },
         );
-    }
-
-    // Gallery pages
-    if (inURL("/gallery/index.phtml")) {
-        $("img.itemimg[src*='/items/']").each(function (k, img) {
-            $(img)
-                .siblings("b.textcolor")
-                .first()
-                .each(function (i, nameEl) {
-                    $(nameEl).after(makelinks($(nameEl).text()));
-                });
-        });
     }
 
     // Hidden Tower
