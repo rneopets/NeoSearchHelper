@@ -7,6 +7,7 @@
 // @match        *://*.neopets.com/auctions.phtml*
 // @match        *://*.neopets.com/browseshop.phtml*
 // @match        *://*.neopets.com/closet.phtml*
+// @match        *://*.neopets.com/dome/arena.phtml*
 // @match        *://*.neopets.com/dome/neopets.phtml*
 // @match        *://*.neopets.com/donations.phtml*
 // @match        *://*.neopets.com/faerieland/darkfaerie.phtml*
@@ -699,6 +700,7 @@ if (isBeta) {
      Safety Deposit Box
      Closet
      Battledome Equipment
+     Battledome Rewards
      Your Shop
      Your Shop's Sales History
     */
@@ -1310,6 +1312,36 @@ if (isBeta) {
             }
         });
         $(".equipTable").css({ "overflow-y": "scroll" });
+    }
+
+    // Battledome Rewards (popup is created and filled in after a battle)
+    if (inPath("/dome/arena.phtml")) {
+        function addBattledomeRewardLinks() {
+            $("#bd_rewardsloot td").each(function (index, element) {
+                const $cell = $(element);
+                const itemname = $cell.find(".prizname").first().text().trim();
+                const $existing = $cell.children(".search-helper");
+                if (!itemname || /^[\d,]+\s+Neopoints?$/i.test(itemname)) {
+                    $existing.remove();
+                } else if (
+                    $existing.length !== 1 ||
+                    $existing.attr("data-item-name") !== itemname
+                ) {
+                    $existing.remove();
+                    $cell.append(makelinks(itemname));
+                }
+            });
+        }
+
+        let bdRewardsT = 0;
+        new MutationObserver(function () {
+            clearTimeout(bdRewardsT);
+            bdRewardsT = setTimeout(addBattledomeRewardLinks, 50);
+        }).observe(document.documentElement, {
+            childList: true,
+            subtree: true,
+        });
+        addBattledomeRewardLinks();
     }
 
     // Your Shop
