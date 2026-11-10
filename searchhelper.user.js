@@ -4,6 +4,10 @@
 // @namespace    neopets
 // @description  Adds convenient search icons to many places. On modern Neopets pages, choose and reorder icons via Search Helper in the profile dropdown.
 // @author       diceroll123
+// @homepageURL  https://github.com/rneopets/NeoSearchHelper
+// @supportURL   https://github.com/rneopets/NeoSearchHelper/issues
+// @updateURL    https://raw.githubusercontent.com/rneopets/NeoSearchHelper/main/searchhelper.user.js
+// @downloadURL  https://raw.githubusercontent.com/rneopets/NeoSearchHelper/main/searchhelper.user.js
 // @match        *://*.neopets.com/auctions.phtml*
 // @match        *://*.neopets.com/browseshop.phtml*
 // @match        *://*.neopets.com/closet.phtml*
