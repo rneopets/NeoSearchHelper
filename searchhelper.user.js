@@ -47,6 +47,7 @@
 // @match        *://*.neopets.com/winter/snowfaerie*.phtml*
 // @match        *://*.neopets.com/questlog/*
 // @match        *://*.neopets.com/games/teatime/*
+// @match        *://ncmall.neopets.com/*
 // @icon         https://www.neopets.com/favicon.ico
 // @grant        none
 // ==/UserScript==
@@ -707,6 +708,7 @@ if (isBeta) {
      Battledome Rewards
      Your Shop
      Your Shop's Sales History
+     NC Mall
     */
 
     // Modern auction listings, Genie results, and lot details share these item nodes.
@@ -1369,6 +1371,43 @@ if (isBeta) {
                 appendItemLinks(cell, cell.text());
             }
         });
+    }
+
+    // NC Mall
+    if (searchHelperPageURL.host === "ncmall.neopets.com") {
+        function addMallLinks() {
+            $(".item-name, .item-name-homepage").each(function () {
+                const $row = $(this).parent();
+                const itemname = $(this).text().trim();
+                if (
+                    itemname &&
+                    $row.siblings(".search-helper").attr("data-item-name") !==
+                        itemname
+                ) {
+                    $row.after(
+                        makelinks(itemname, {
+                            cash: true,
+                            wearable:
+                                $(this)
+                                    .closest(".item")
+                                    .find(".link-tryon, .link-tryon-homepage")
+                                    .length > 0,
+                            tradeable: false,
+                        }),
+                    );
+                }
+            });
+        }
+
+        let mallT = 0;
+        new MutationObserver(function () {
+            clearTimeout(mallT);
+            mallT = setTimeout(addMallLinks, 50);
+        }).observe(document.documentElement, {
+            childList: true,
+            subtree: true,
+        });
+        addMallLinks();
     }
 
     // Hoisted out of this if/else branch to the enclosing scope at runtime
