@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Neopets - Search Helper
-// @version      1.0.46
+// @version      1.0.47
 // @namespace    neopets
 // @description  Adds convenient search icons to many places. On modern Neopets pages, choose and reorder icons via Search Helper in the profile dropdown.
 // @author       diceroll123
